@@ -49,7 +49,12 @@
 @media (min-width: 900px) { .boutique { padding-bottom: 0; } }
 
 .boutique * { box-sizing: border-box; }
-.boutique a { color: inherit; text-decoration: none; }
+/* Zero specificity via :where() so any component's own colour (.btnPrimary,
+   .linkRule, footer links, etc.) always wins, no matter how it's nested.
+   A plain ".boutique a" selector outranks a single class like ".btnPrimary"
+   (two selectors beat one), which was silently forcing dark ink text onto
+   every WhatsApp button — this is the fix for that. */
+:where(.boutique) :where(a) { color: inherit; text-decoration: none; }
 /* Zero-specificity reset via :where() so every component's own font-size,
    line-height and colour always win. A plain `.boutique button` selector
    would outrank the component classes and strip their colours. */
