@@ -1,0 +1,640 @@
+<title>Rangat Boutique</title>
+<meta name="description" content="Demo ethnic-wear boutique storefront — reusable client template with collection carousel, WhatsApp ordering, and on-load animations.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>
+  /* ============================================================
+     RANGAT — reusable boutique template (demo content is fictional)
+     Client-swap points are marked with:  <!-- SWAP: ... -->
+     Product photos: replace each  .ph  gradient div with <img class="ph" src="...">
+     WhatsApp number: change PHONE in the script at the bottom.
+     ============================================================ */
+  :root{
+    --bg:#F7F1E6; --surface:#FFFDF8; --surface-2:#F0E7D6;
+    --ink:#20263F; --muted:#6E6A78; --line:#E4D9C4;
+    --brand:#2E4478; --brand-soft:#41599A;
+    --accent:#DE8A22; --accent-deep:#B85C1E;
+    --good:#1F7A4D; --wa:#1FA855; --wa-ink:#fff;
+    --shadow:0 1px 2px rgba(32,38,63,.05), 0 10px 30px -12px rgba(32,38,63,.18);
+    --shadow-lg:0 4px 10px rgba(32,38,63,.08), 0 30px 60px -24px rgba(32,38,63,.4);
+    --radius:14px; --maxw:1120px;
+    --serif:"Fraunces",Georgia,"Times New Roman",serif;
+    --sans:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --ease:cubic-bezier(.2,.7,.2,1);
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme: dark){
+      --bg:#14141C; --surface:#1D1D28; --surface-2:#242432;
+      --ink:#F2ECDD; --muted:#A69FB0; --line:#2E2E3D;
+      --brand:#7E97D8; --brand-soft:#6E86C7; --accent:#F0A93E; --accent-deep:#E08A2E;
+      --good:#54C68A; --wa:#25D366;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 14px 34px -14px rgba(0,0,0,.6);
+      --shadow-lg:0 4px 12px rgba(0,0,0,.4), 0 34px 64px -26px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14141C; --surface:#1D1D28; --surface-2:#242432;
+    --ink:#F2ECDD; --muted:#A69FB0; --line:#2E2E3D;
+    --brand:#7E97D8; --brand-soft:#6E86C7; --accent:#F0A93E; --accent-deep:#E08A2E;
+    --good:#54C68A; --wa:#25D366;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 14px 34px -14px rgba(0,0,0,.6);
+    --shadow-lg:0 4px 12px rgba(0,0,0,.4), 0 34px 64px -26px rgba(0,0,0,.8);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+       font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  img.ph{object-fit:cover;width:100%;height:100%}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+  h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.08;text-wrap:balance;margin:0}
+  .eyebrow{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;font-weight:700;color:var(--accent-deep)}
+  .btn{display:inline-flex;align-items:center;gap:.5em;font-family:var(--sans);font-weight:700;
+       font-size:.95rem;border:none;cursor:pointer;padding:.8em 1.25em;border-radius:999px;
+       transition:transform .12s ease,filter .12s ease}
+  .btn:active{transform:translateY(1px)}
+  .btn-wa{background:var(--wa);color:var(--wa-ink)}
+  .btn-wa:hover{filter:brightness(1.05)}
+  .btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+  .btn-ghost:hover{border-color:var(--brand)}
+  :focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+  /* ---- fabric-swatch placeholders (swap each .ph for a real <img class="ph">) ---- */
+  .s1{background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.22) 0 14%,transparent 15%) 0 0/34px 34px,linear-gradient(140deg,#2E4478,#41599A)}
+  .s2{background:repeating-linear-gradient(48deg,#C25A22 0 12px,#DE8A22 12px 24px)}
+  .s3{background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.18) 0 18%,transparent 19%) 0 0/30px 30px,linear-gradient(140deg,#6E3A6E,#9A4C6E)}
+  .s4{background:linear-gradient(140deg,#1F7A4D,#3AA06A)}
+  .s5{background:repeating-linear-gradient(-45deg,#20263F 0 10px,#33406B 10px 20px)}
+  .s6{background:radial-gradient(circle at 28% 28%,rgba(255,255,255,.2) 0 12%,transparent 13%) 0 0/40px 40px,linear-gradient(140deg,#B85C1E,#DE8A22)}
+  .s7{background:linear-gradient(140deg,#7A2E4E,#B3496E)}
+  .s8{background:radial-gradient(circle at 50% 30%,rgba(255,255,255,.22) 0 10%,transparent 11%) 0 0/26px 26px,linear-gradient(150deg,#2E4478,#5A3A78)}
+  .c1{background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.16) 0 12%,transparent 13%) 0 0/46px 46px,linear-gradient(150deg,#2E4478,#41599A 55%,#5A3A78)}
+  .c2{background:radial-gradient(circle at 70% 20%,rgba(222,138,34,.55),transparent 46%),linear-gradient(150deg,#B85C1E,#DE8A22)}
+  .c3{background:linear-gradient(150deg,#7A2E4E,#B3496E 60%,#DE8A22)}
+  .c4{background:repeating-linear-gradient(-50deg,#20263F 0 14px,#33406B 14px 28px)}
+  .c5{background:radial-gradient(circle at 40% 40%,rgba(255,255,255,.2) 0 16%,transparent 17%) 0 0/34px 34px,linear-gradient(150deg,#1F7A4D,#41599A)}
+
+  /* ---- first-load reveal (fade + slide). Falls back to fully visible without JS ---- */
+  .js .reveal{opacity:0;transform:translateY(24px)}
+  .reveal{transition:opacity .7s var(--ease), transform .7s var(--ease)}
+  .reveal.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion: reduce){
+    .js .reveal{opacity:1!important;transform:none!important;transition:none!important}
+    .ticker .track{animation:none!important}
+    *{transition:none!important;scroll-behavior:auto!important}
+  }
+
+  /* demo note */
+  .demo-note{background:var(--accent);color:#2a1c05;text-align:center;font-weight:700;font-size:.78rem;padding:.5rem 1rem}
+
+  /* ---- moving sale ticker (news line) ---- */
+  .ticker{background:var(--ink);color:var(--bg);overflow:hidden;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.08)}
+  .ticker .track{display:inline-flex;align-items:center;gap:2.6rem;padding:.55rem 0;width:max-content;
+                 animation:ticker 30s linear infinite;will-change:transform}
+  .ticker:hover .track{animation-play-state:paused}
+  .ticker .track span{font-weight:800;font-size:.76rem;letter-spacing:.1em;text-transform:uppercase;display:inline-flex;align-items:center;gap:2.6rem}
+  .ticker .track span::before{content:"✦";color:var(--accent)}
+  @keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+  /* header */
+  header.site{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);
+              backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.85rem 0}
+  .brand{font-family:var(--serif);font-weight:600;font-size:1.5rem;letter-spacing:.01em;display:flex;align-items:baseline;gap:.45rem}
+  .brand b{color:var(--brand)}
+  .brand small{font-family:var(--sans);font-size:.6rem;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .menu{display:none;gap:1.5rem;font-weight:600;font-size:.92rem}
+  .menu a:hover{color:var(--brand)}
+  @media(min-width:860px){.menu{display:flex}}
+  @media(max-width:560px){
+    .nav .btn-wa{font-size:0;gap:0;padding:.7em;border-radius:50%}
+    .nav .btn-wa svg{width:19px;height:19px}
+  }
+
+  /* hero */
+  .hero{padding:2.4rem 0 1rem}
+  .hero-grid{display:grid;gap:1.6rem}
+  @media(min-width:860px){.hero-grid{grid-template-columns:1fr 1fr;align-items:center;gap:2.5rem}}
+  .hero h1{font-size:clamp(2.4rem,7vw,4.1rem);letter-spacing:-.01em}
+  .hero h1 em{font-style:italic;color:var(--brand)}
+  .hero p.lede{color:var(--muted);font-size:1.08rem;max-width:44ch;margin:1rem 0 1.5rem}
+  .hero-cta{display:flex;flex-wrap:wrap;gap:.7rem}
+  .hero-art{position:relative;border-radius:20px;overflow:hidden;box-shadow:var(--shadow);aspect-ratio:4/5;min-height:320px}
+  .hero-art .ph{position:absolute;inset:0;transition:transform .7s var(--ease)}
+  .hero-art:hover .ph{transform:scale(1.05)}
+  .hero-art .tag{position:absolute;left:18px;top:18px;z-index:2;background:var(--accent);color:#2a1c05;font-weight:800;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;padding:.4rem .7rem;border-radius:999px}
+  .hero-art .plate{position:absolute;left:16px;right:16px;bottom:16px;z-index:2;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(4px);border-radius:14px;padding:.9rem 1rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem}
+  .hero-art .plate b{font-family:var(--serif);font-size:1.15rem}
+  .hero-art .plate .pr{font-weight:800;color:var(--brand)}
+
+  .strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:1.6rem;background:var(--surface-2)}
+  .strip ul{list-style:none;margin:0;padding:.9rem 0;display:flex;flex-wrap:wrap;gap:.4rem 2rem;justify-content:center;font-weight:600;font-size:.86rem}
+  .strip li{display:flex;align-items:center;gap:.5rem}
+  .strip li::before{content:"✦";color:var(--accent);font-size:.8em}
+
+  section{padding:3rem 0}
+  .sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:1.4rem;flex-wrap:wrap}
+  .sec-head h2{font-size:clamp(1.7rem,4vw,2.4rem)}
+  .sec-head p{color:var(--muted);margin:.3rem 0 0}
+
+  /* circular category menu (inspired by ref 2) */
+  .cats{display:flex;gap:1.1rem;overflow-x:auto;padding:.4rem 0 .6rem;scrollbar-width:none}
+  .cats::-webkit-scrollbar{display:none}
+  @media(min-width:860px){.cats{justify-content:center}}
+  .cat{flex:none;width:88px;text-align:center;background:none;border:none;cursor:pointer;font-family:var(--sans)}
+  .cat .circle{width:76px;height:76px;border-radius:50%;overflow:hidden;position:relative;margin:0 auto .55rem;border:2px solid var(--line);box-shadow:var(--shadow)}
+  .cat .circle .ph{position:absolute;inset:0;transition:transform .5s var(--ease)}
+  .cat:hover .circle .ph{transform:scale(1.14)}
+  .cat:hover .circle{border-color:var(--brand)}
+  .cat b{font-size:.82rem;font-weight:700;color:var(--ink)}
+  .cat.sale .circle{background:var(--ink);border-color:var(--ink);display:grid;place-items:center}
+  .cat.sale .circle::after{content:"SALE";color:var(--accent);font-weight:800;font-size:.82rem;letter-spacing:.08em}
+
+  /* collection carousel (inspired by ref 1) */
+  .carousel{position:relative}
+  .track2{display:flex;gap:1.1rem;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;
+          padding:1rem max(6vw,16px) 1.6rem;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .track2::-webkit-scrollbar{display:none}
+  .collect{flex:none;width:80%;max-width:400px;aspect-ratio:3/4;scroll-snap-align:center;position:relative;
+           border-radius:22px;overflow:hidden;box-shadow:var(--shadow-lg);
+           transform:scale(.9);opacity:.55;transition:transform .45s var(--ease),opacity .45s var(--ease)}
+  @media(min-width:720px){.collect{width:40%}}
+  @media(min-width:1040px){.collect{width:30%}}
+  .collect.is-center{transform:scale(1);opacity:1}
+  .collect .ph{position:absolute;inset:0;transition:transform .7s var(--ease)}
+  .collect:hover .ph{transform:scale(1.07)}
+  .collect .cap{position:absolute;inset:auto 0 0 0;z-index:2;padding:1.5rem 1.4rem;color:#fff;
+                background:linear-gradient(to top,rgba(10,12,24,.72),rgba(10,12,24,.05))}
+  .collect .cap small{display:block;font-family:var(--sans);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;font-weight:800;opacity:.9;margin-bottom:.25rem}
+  .collect .cap b{font-family:var(--serif);font-weight:600;font-size:1.55rem;line-height:1.05}
+  .collect .cap .go{display:inline-flex;margin-top:.7rem;background:#fff;color:var(--ink);font-size:.78rem;font-weight:800;padding:.5rem .9rem;border-radius:999px}
+  .arw{position:absolute;top:44%;transform:translateY(-50%);z-index:5;width:44px;height:44px;border-radius:50%;
+       background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer;display:grid;place-items:center;color:var(--ink)}
+  .arw:hover{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .arw svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2}
+  .arw.prev{left:6px}.arw.next{right:6px}
+  @media(max-width:600px){.arw{display:none}}
+
+  /* product grid */
+  .chips{display:flex;gap:.6rem;overflow-x:auto;padding-bottom:.4rem;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{white-space:nowrap;border:1.5px solid var(--line);background:var(--surface);padding:.5rem 1rem;border-radius:999px;font-weight:700;font-size:.86rem;cursor:pointer;font-family:var(--sans);color:var(--ink)}
+  .chip.is-on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-top:1.4rem}
+  @media(min-width:720px){.grid{grid-template-columns:repeat(3,1fr);gap:1.3rem}}
+  @media(min-width:980px){.grid{grid-template-columns:repeat(4,1fr)}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow);position:relative}
+  .swatch{aspect-ratio:3/4;position:relative;overflow:hidden;display:block}
+  .swatch .ph{position:absolute;inset:0;transition:transform .6s var(--ease)}
+  .card:hover .swatch .ph{transform:scale(1.09)}
+  .swatch .lbl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-style:italic;color:rgba(255,255,255,.92);font-size:1.05rem;text-shadow:0 1px 8px rgba(0,0,0,.35);pointer-events:none}
+  .swatch .flag{position:absolute;top:10px;left:10px;z-index:2;font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:.3rem .55rem;border-radius:999px;background:var(--surface);color:var(--accent-deep)}
+  .swatch .flag.hot{background:var(--accent-deep);color:#fff}
+  .wish{position:absolute;top:10px;right:10px;z-index:3;width:34px;height:34px;border-radius:50%;background:color-mix(in srgb,var(--surface) 86%,transparent);backdrop-filter:blur(4px);border:1px solid var(--line);display:grid;place-items:center;cursor:pointer;padding:0}
+  .wish svg{width:17px;height:17px;fill:none;stroke:var(--ink);stroke-width:2;transition:transform .15s ease}
+  .wish:active svg{transform:scale(.8)}
+  .wish.on svg{fill:var(--accent);stroke:var(--accent)}
+  .cbody{padding:.85rem .9rem 1rem;display:flex;flex-direction:column;gap:.5rem;flex:1}
+  .cbody h3{font-family:var(--sans);font-size:.98rem;font-weight:700;line-height:1.25}
+  .price{display:flex;align-items:baseline;gap:.5rem;font-weight:800}
+  .price .mrp{color:var(--muted);font-weight:600;text-decoration:line-through;font-size:.85em}
+  .price .off{color:var(--good);font-weight:800;font-size:.78rem}
+  .card .btn-wa{width:100%;justify-content:center;margin-top:auto;font-size:.86rem;padding:.7em 1em}
+
+  /* promo banners (inspired by ref 2) */
+  .promos{display:grid;gap:1rem;grid-template-columns:1fr;margin-top:1.6rem}
+  @media(min-width:760px){.promos{grid-template-columns:1fr 1fr}}
+  .promo{position:relative;border-radius:18px;overflow:hidden;min-height:200px;display:flex;flex-direction:column;justify-content:center;padding:1.7rem;color:#fff;box-shadow:var(--shadow)}
+  .promo .ph{position:absolute;inset:0;z-index:0;transition:transform .7s var(--ease)}
+  .promo::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(10,12,24,.62),rgba(10,12,24,.12))}
+  .promo:hover .ph{transform:scale(1.06)}
+  .promo>*{position:relative;z-index:2}
+  .promo small{font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;font-weight:800;opacity:.9}
+  .promo b{font-family:var(--serif);font-weight:600;font-size:1.7rem;margin:.3rem 0 .9rem}
+  .promo .btn{align-self:flex-start;background:#fff;color:var(--ink)}
+
+  /* values */
+  .values{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+  @media(min-width:720px){.values{grid-template-columns:repeat(4,1fr)}}
+  .val{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1.1rem;text-align:center}
+  .val .ic{font-size:1.5rem}.val b{display:block;margin-top:.3rem}.val small{color:var(--muted)}
+
+  /* about */
+  .about{display:grid;gap:1.6rem;align-items:center}
+  @media(min-width:860px){.about{grid-template-columns:1.1fr 1fr;gap:2.5rem}}
+  .about-art{border-radius:18px;min-height:280px;overflow:hidden;box-shadow:var(--shadow);position:relative}
+  .about-art .ph{position:absolute;inset:0;transition:transform .7s var(--ease)}
+  .about-art:hover .ph{transform:scale(1.05)}
+  .about p{color:var(--muted);max-width:52ch}
+  .about h2{font-size:clamp(1.8rem,4vw,2.6rem);margin-bottom:.6rem}
+
+  /* reviews */
+  .reviews{background:var(--surface-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .rev-grid{display:grid;gap:1rem;grid-template-columns:1fr}
+  @media(min-width:720px){.rev-grid{grid-template-columns:repeat(3,1fr)}}
+  .rev{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1.2rem}
+  .stars{color:var(--accent);letter-spacing:.1em}
+  .rev p{margin:.6rem 0 .8rem}.rev .who{font-weight:700;font-size:.9rem}.rev .who small{display:block;color:var(--muted);font-weight:500}
+
+  /* newsletter (inspired by ref 2) */
+  .news{background:linear-gradient(140deg,var(--brand),#5A3A78);color:#fff;border-radius:22px;padding:clamp(1.6rem,4vw,2.8rem);
+        display:grid;gap:1rem;align-items:center;box-shadow:var(--shadow-lg)}
+  @media(min-width:760px){.news{grid-template-columns:1.1fr 1fr}}
+  .news h2{color:#fff;font-size:clamp(1.6rem,4vw,2.3rem)}
+  .news p{opacity:.9;margin-top:.4rem;max-width:40ch}
+  .nlform{display:flex;gap:.6rem;flex-wrap:wrap}
+  .nlform input{flex:1;min-width:180px;border:none;border-radius:999px;padding:.85rem 1.1rem;font-family:var(--sans);font-size:.95rem}
+  .nlform input:focus-visible{outline:3px solid var(--accent)}
+  .nlmsg{font-weight:700}
+
+  /* footer */
+  footer.site{background:var(--brand);color:#EDE3CE}
+  footer.site a{color:#EDE3CE}
+  .foot{display:grid;gap:1.5rem;padding:2.6rem 0 1.4rem}
+  @media(min-width:720px){.foot{grid-template-columns:1.4fr 1fr 1fr}}
+  footer .brand b{color:#fff}footer .brand small{color:rgba(237,227,206,.7)}
+  .foot h4{font-family:var(--sans);text-transform:uppercase;letter-spacing:.14em;font-size:.72rem;opacity:.7;margin:0 0 .7rem}
+  .foot ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.45rem;font-size:.92rem}
+  .foot .pay{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem}
+  .foot .pay span{border:1px solid rgba(237,227,206,.35);border-radius:6px;padding:.25rem .5rem;font-size:.7rem;font-weight:700;letter-spacing:.06em}
+  .legal{border-top:1px solid rgba(237,227,206,.2);padding:1rem 0 2rem;font-size:.78rem;opacity:.75;display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+
+  /* floating dock (mobile, inspired by ref 1) */
+  .dock{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:60;display:flex;gap:.25rem;
+        background:color-mix(in srgb,var(--surface) 82%,transparent);backdrop-filter:blur(14px);
+        border:1px solid var(--line);border-radius:999px;padding:.4rem;box-shadow:var(--shadow-lg)}
+  .dock a{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:var(--ink)}
+  .dock a svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9}
+  .dock a.active{background:var(--brand);color:#fff}
+  .dock a.wa{background:var(--wa);color:#fff}
+  @media(min-width:860px){.dock{display:none}}
+  @media(max-width:859px){body{padding-bottom:86px}}
+</style>
+
+<script>document.documentElement.className += " js";</script>
+
+<!-- SWAP: this bar only explains the template; delete it on a real client site -->
+<div class="demo-note">Demo template · “Rangat” is a fictional boutique · swap in real photos, products, prices &amp; WhatsApp number</div>
+
+<!-- SWAP: sale offers for the moving ticker -->
+<div class="ticker" aria-label="Current offers">
+  <div class="track">
+    <span>Festive Sale — up to 40% off</span><span>Free delivery over ₹1,999</span>
+    <span>New drop every Friday</span><span>Extra 10% off on UPI</span><span>Easy 7-day exchange</span>
+    <span aria-hidden="true">Festive Sale — up to 40% off</span><span aria-hidden="true">Free delivery over ₹1,999</span>
+    <span aria-hidden="true">New drop every Friday</span><span aria-hidden="true">Extra 10% off on UPI</span><span aria-hidden="true">Easy 7-day exchange</span>
+  </div>
+</div>
+
+<header class="site">
+  <div class="wrap nav">
+    <a class="brand" href="#top">Rangat<b>.</b> <small>Jodhpur</small></a>
+    <nav class="menu">
+      <a href="#collections">Collections</a><a href="#shop">New In</a>
+      <a href="#shop">Kurtis</a><a href="#shop">Lehengas</a><a href="#about">About</a>
+    </nav>
+    <a class="btn btn-wa js-wa" data-msg="Hi Rangat! I'd like to know more about your collection.">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.06 24l1.68-6.16A11.9 11.9 0 0 1 .16 11.9C.16 5.33 5.5 0 12.06 0a11.8 11.8 0 0 1 8.4 3.49 11.8 11.8 0 0 1 3.48 8.42c0 6.57-5.34 11.9-11.9 11.9a11.9 11.9 0 0 1-5.7-1.45L.06 24zM6.6 20.13c1.67.99 3.27 1.58 5.44 1.58 5.45 0 9.9-4.43 9.9-9.88a9.86 9.86 0 0 0-9.88-9.9C6.6 1.93 2.16 6.36 2.16 11.8c0 2.28.67 3.99 1.79 5.79l-1 3.63 3.65-.99zM18 14.6c-.07-.12-.27-.2-.56-.35-.3-.15-1.76-.87-2.03-.96-.27-.1-.47-.15-.66.15-.2.3-.76.95-.93 1.15-.17.2-.34.22-.63.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.76-1.64-2.06-.17-.3-.02-.46.13-.6.13-.14.3-.34.44-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.66-1.6-.9-2.19-.24-.57-.48-.5-.66-.5l-.57-.01c-.2 0-.52.07-.79.37-.27.3-1.04 1.01-1.04 2.47 0 1.46 1.06 2.87 1.21 3.07.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.69.63.71.22 1.36.19 1.87.12.57-.09 1.76-.72 2-1.41.25-.7.25-1.29.18-1.41z"/></svg>
+      Order on WhatsApp
+    </a>
+  </div>
+</header>
+
+<main id="top">
+  <!-- HERO -->
+  <section class="hero" aria-label="Featured collection">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow reveal">Festive Edit ’26 · Handpicked in Jodhpur</span>
+        <h1 class="reveal">Ethnic wear that feels like <em>an occasion.</em></h1>
+        <p class="lede reveal">Kurtis, anarkalis and suit sets in small-batch prints. Browse the full
+          collection, then order in two taps on WhatsApp — no login, no complicated checkout.</p>
+        <div class="hero-cta reveal">
+          <a class="btn btn-wa js-wa" data-msg="Hi Rangat! I'd like to see the festive collection.">Shop on WhatsApp</a>
+          <a class="btn btn-ghost" href="#collections">Browse collections</a>
+        </div>
+      </div>
+      <div class="hero-art reveal" role="img" aria-label="Festive collection lookbook">
+        <div class="ph c2"></div>
+        <span class="tag">New in</span>
+        <div class="plate"><b>Marigold Anarkali Set</b><span class="pr">₹2,199</span></div>
+      </div>
+    </div>
+    <div class="strip reveal">
+      <div class="wrap">
+        <ul><li>Free delivery over ₹1,999</li><li>7-day easy exchange</li><li>Cash on delivery</li><li>Handpicked fabrics</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- CIRCULAR CATEGORY MENU -->
+  <section style="padding-bottom:1rem">
+    <div class="wrap">
+      <div class="sec-head reveal"><div><span class="eyebrow">Shop by category</span><h2>Find your style</h2></div></div>
+      <div class="cats reveal">
+        <button class="cat" data-filter="all"><span class="circle"><span class="ph c1"></span></span><b>New In</b></button>
+        <button class="cat" data-filter="kurti"><span class="circle"><span class="ph s1"></span></span><b>Kurtis</b></button>
+        <button class="cat" data-filter="suit"><span class="circle"><span class="ph s4"></span></span><b>Suit Sets</b></button>
+        <button class="cat" data-filter="lehenga"><span class="circle"><span class="ph s7"></span></span><b>Lehengas</b></button>
+        <button class="cat" data-filter="dupatta"><span class="circle"><span class="ph s2"></span></span><b>Dupattas</b></button>
+        <button class="cat" data-filter="all"><span class="circle"><span class="ph s3"></span></span><b>Bandhani</b></button>
+        <button class="cat sale" data-filter="all"><span class="circle"></span><b>Sale</b></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- COLLECTION CAROUSEL (catalog menu) -->
+  <section id="collections" style="padding-top:1rem">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div><span class="eyebrow">Shop by collection</span><h2>Explore the edits</h2>
+          <p>Swipe through — tap a collection to browse it on WhatsApp.</p></div>
+      </div>
+    </div>
+    <div class="carousel reveal">
+      <button class="arw prev" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="track2" id="track2">
+        <a class="collect js-wa" data-msg="Hi Rangat! Show me the Festive Edit collection.">
+          <span class="ph c2"></span>
+          <div class="cap"><small>18 pieces</small><b>Festive Edit</b><span class="go">View collection →</span></div>
+        </a>
+        <a class="collect js-wa" data-msg="Hi Rangat! Show me the Everyday Kurtis.">
+          <span class="ph c1"></span>
+          <div class="cap"><small>32 pieces</small><b>Everyday Kurtis</b><span class="go">View collection →</span></div>
+        </a>
+        <a class="collect js-wa" data-msg="Hi Rangat! Show me the Bridal Lehengas.">
+          <span class="ph c3"></span>
+          <div class="cap"><small>12 pieces</small><b>Bridal Lehengas</b><span class="go">View collection →</span></div>
+        </a>
+        <a class="collect js-wa" data-msg="Hi Rangat! Show me the Bandhani Edit.">
+          <span class="ph c4"></span>
+          <div class="cap"><small>21 pieces</small><b>Bandhani Edit</b><span class="go">View collection →</span></div>
+        </a>
+        <a class="collect js-wa" data-msg="Hi Rangat! Show me the Cotton Comfort suits.">
+          <span class="ph c5"></span>
+          <div class="cap"><small>26 pieces</small><b>Cotton Comfort</b><span class="go">View collection →</span></div>
+        </a>
+      </div>
+      <button class="arw next" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+  </section>
+
+  <!-- PRODUCT GRID -->
+  <section id="shop" style="padding-top:1rem">
+    <div class="wrap">
+      <div class="sec-head reveal"><div><span class="eyebrow">Shop the edit</span><h2>New this week</h2>
+        <p>Tap a category to filter. Every piece ships pan-India.</p></div></div>
+      <div class="chips reveal" role="tablist" aria-label="Categories">
+        <button class="chip is-on" data-filter="all">All</button>
+        <button class="chip" data-filter="kurti">Kurtis</button>
+        <button class="chip" data-filter="suit">Suit Sets</button>
+        <button class="chip" data-filter="lehenga">Lehengas</button>
+        <button class="chip" data-filter="dupatta">Dupattas</button>
+      </div>
+      <div class="grid" id="grid">
+        <!-- SWAP each .ph div for <img class="ph" src="product.jpg" alt="..."> -->
+        <article class="card reveal" data-cat="suit" data-name="Marigold Anarkali Set" data-price="2199">
+          <div class="swatch"><div class="ph s6"></div><span class="flag hot">Bestseller</span><span class="lbl">Anarkali</span></div>
+          <button class="wish" aria-label="Add to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9C.5 8.5 2 5 5.5 5 8 5 9.5 6.8 12 9c2.5-2.2 4-4 6.5-4C22 5 23.5 8.5 22 12c-2.5 4.4-10 9-10 9z"/></svg></button>
+          <div class="cbody"><h3>Marigold Anarkali Set</h3>
+            <div class="price">₹2,199 <span class="mrp">₹3,299</span><span class="off">33% off</span></div>
+            <a class="btn btn-wa js-order">Order on WhatsApp</a></div>
+        </article>
+        <article class="card reveal" data-cat="kurti" data-name="Indigo Block-print Kurti" data-price="1149">
+          <div class="swatch"><div class="ph s1"></div><span class="lbl">Kurti</span></div>
+          <button class="wish" aria-label="Add to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9C.5 8.5 2 5 5.5 5 8 5 9.5 6.8 12 9c2.5-2.2 4-4 6.5-4C22 5 23.5 8.5 22 12c-2.5 4.4-10 9-10 9z"/></svg></button>
+          <div class="cbody"><h3>Indigo Block-print Kurti</h3>
+            <div class="price">₹1,149 <span class="mrp">₹1,599</span><span class="off">28% off</span></div>
+            <a class="btn btn-wa js-order">Order on WhatsApp</a></div>
+        </article>
+        <article class="card reveal" data-cat="lehenga" data-name="Rani Pink Lehenga" data-price="4899">
+          <div class="swatch"><div class="ph s7"></div><span class="flag">Only 2 left</span><span class="lbl">Lehenga</span></div>
+          <button class="wish" aria-label="Add to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9C.5 8.5 2 5 5.5 5 8 5 9.5 6.8 12 9c2.5-2.2 4-4 6.5-4C22 5 23.5 8.5 22 12c-2.5 4.4-10 9-10 9z"/></svg></button>
+          <div class="cbody"><h3>Rani Pink Georgette Lehenga</h3>
+            <div class="price">₹4,899 <span class="mrp">₹6,500</span><span class="off">25% off</span></div>
+            <a class="btn btn-wa js-order">Order on WhatsApp</a></div>
+        </article>
+        <article class="card reveal" data-cat="suit" data-name="Emerald Cotton Suit Set" data-price="1799">
+          <div class="swatch"><div class="ph s4"></div><span class="lbl">Suit Set</span></div>
+          <button class="wish" aria-label="Add to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9C.5 8.5 2 5 5.5 5 8 5 9.5 6.8 12 9c2.5-2.2 4-4 6.5-4C22 5 23.5 8.5 22 12c-2.5 4.4-10 9-10 9z"/></svg></button>
+          <div class="cbody"><h3>Emerald Cotton Suit Set</h3>
+            <div class="price">₹1,799 <span class="mrp">₹2,399</span><span class="off">25% off</span></div>
+            <a class="btn btn-wa js-order">Order on WhatsApp</a></div>
+        </article>
+        <article class="card reveal" data-cat="dupatta" data-name="Bandhani Silk Dupatta" data-price="799">
+          <div class="swatch"><div class="ph s2"></div><span class="lbl">Dupatta</span></div>
+          <button class="wish" aria-label="Add to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9C.5 8.5 2 5 5.5 5 8 5 9.5 6.8 12 9c2.5-2.2 4-4 6.5-4C22 5 23.5 8.5 22 12c-2.5 4.4-10 9-10 9z"/></svg></button>
+          <div class="cbody"><h3>Bandhani Silk Dupatta</h3>
+            <div class="price">₹799 <span class="mrp">₹1,199</span><span class="off">33% off</span></div>
+            <a class="btn btn-wa js-order">Order on WhatsApp</a></div>
+        </article>
+        <article class="card reveal" data-cat="kurti" data-name="Plum Chikankari Kurti" data-price="1349">
+          <div class="swatch"><div class="ph s3"></div><span class="lbl">Kurti</span></div>
+          <button class="wish" aria-label="Add to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9C.5 8.5 2 5 5.5 5 8 5 9.5 6.8 12 9c2.5-2.2 4-4 6.5-4C22 5 23.5 8.5 22 12c-2.5 4.4-10 9-10 9z"/></svg></button>
+          <div class="cbody"><h3>Plum Chikankari Kurti</h3>
+            <div class="price">₹1,349 <span class="mrp">₹1,899</span><span class="off">29% off</span></div>
+            <a class="btn btn-wa js-order">Order on WhatsApp</a></div>
+        </article>
+        <article class="card reveal" data-cat="lehenga" data-name="Midnight Sequin Lehenga" data-price="5499">
+          <div class="swatch"><div class="ph s5"></div><span class="flag hot">Festive</span><span class="lbl">Lehenga</span></div>
+          <button class="wish" aria-label="Add to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9C.5 8.5 2 5 5.5 5 8 5 9.5 6.8 12 9c2.5-2.2 4-4 6.5-4C22 5 23.5 8.5 22 12c-2.5 4.4-10 9-10 9z"/></svg></button>
+          <div class="cbody"><h3>Midnight Sequin Lehenga</h3>
+            <div class="price">₹5,499 <span class="mrp">₹7,999</span><span class="off">31% off</span></div>
+            <a class="btn btn-wa js-order">Order on WhatsApp</a></div>
+        </article>
+        <article class="card reveal" data-cat="suit" data-name="Royal Blue Palazzo Set" data-price="1999">
+          <div class="swatch"><div class="ph s8"></div><span class="lbl">Suit Set</span></div>
+          <button class="wish" aria-label="Add to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9C.5 8.5 2 5 5.5 5 8 5 9.5 6.8 12 9c2.5-2.2 4-4 6.5-4C22 5 23.5 8.5 22 12c-2.5 4.4-10 9-10 9z"/></svg></button>
+          <div class="cbody"><h3>Royal Blue Palazzo Set</h3>
+            <div class="price">₹1,999 <span class="mrp">₹2,799</span><span class="off">29% off</span></div>
+            <a class="btn btn-wa js-order">Order on WhatsApp</a></div>
+        </article>
+      </div>
+
+      <!-- PROMO BANNERS -->
+      <div class="promos">
+        <div class="promo reveal"><span class="ph c3"></span><small>Limited-time offer</small>
+          <b>Festive Sale — up to 40% off</b>
+          <a class="btn js-wa" data-msg="Hi Rangat! I want to shop the Festive Sale.">Shop the sale</a></div>
+        <div class="promo reveal"><span class="ph c1"></span><small>Just landed</small>
+          <b>Fresh styles, every Friday</b>
+          <a class="btn js-wa" data-msg="Hi Rangat! Show me what's new this week.">Explore new in</a></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VALUES -->
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="values">
+        <div class="val reveal"><div class="ic">🚚</div><b>Pan-India delivery</b><small>Free over ₹1,999</small></div>
+        <div class="val reveal"><div class="ic">🔁</div><b>Easy exchange</b><small>7 days, no questions</small></div>
+        <div class="val reveal"><div class="ic">💵</div><b>COD available</b><small>Pay on delivery</small></div>
+        <div class="val reveal"><div class="ic">🧵</div><b>Handpicked fabrics</b><small>Small-batch quality</small></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="wrap about">
+      <div class="reveal">
+        <span class="eyebrow">Our story</span>
+        <h2>Made in the Blue City, for every celebration.</h2>
+        <p>Rangat began as a small Instagram page run from a home studio in Jodhpur. Every piece is
+          chosen by hand — for the drape, the print, and the way it makes you feel walking into a room.
+          We keep batches small so you rarely turn up wearing what everyone else is.</p>
+        <p style="margin-top:.8rem">Questions about size or fabric? Message us on WhatsApp — a real
+          person replies, usually within the hour.</p>
+        <a class="btn btn-wa js-wa" style="margin-top:1rem" data-msg="Hi Rangat! I have a question about sizing.">Chat with us</a>
+      </div>
+      <div class="about-art reveal" role="img" aria-label="The Rangat studio"><div class="ph c4"></div></div>
+    </div>
+  </section>
+
+  <!-- REVIEWS (demo placeholder content — replace with real client reviews) -->
+  <section class="reviews">
+    <div class="wrap">
+      <div class="sec-head reveal"><div><span class="eyebrow">Loved by customers</span><h2>What people say</h2></div></div>
+      <div class="rev-grid">
+        <div class="rev reveal"><div class="stars">★★★★★</div>
+          <p>“The anarkali fit perfectly and the colour was exactly like the photo. Ordered on WhatsApp in a minute.”</p>
+          <div class="who">Priya S.<small>Jaipur</small></div></div>
+        <div class="rev reveal"><div class="stars">★★★★★</div>
+          <p>“Fabric quality is genuinely lovely and delivery was quick. Will order again for Diwali.”</p>
+          <div class="who">Neha R.<small>Ahmedabad</small></div></div>
+        <div class="rev reveal"><div class="stars">★★★★★</div>
+          <p>“Loved that I could just message and ask about size. Felt personal, not like a big faceless store.”</p>
+          <div class="who">Aarti M.<small>Jodhpur</small></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NEWSLETTER -->
+  <section>
+    <div class="wrap">
+      <div class="news reveal">
+        <div><span class="eyebrow" style="color:#fff;opacity:.85">Join the list</span>
+          <h2>Get first access to new drops.</h2>
+          <p>Sign up for early access, festive offers, and styling ideas — straight to your inbox.</p></div>
+        <div>
+          <form class="nlform" id="nlform" novalidate>
+            <input type="email" required placeholder="Enter your email" aria-label="Email address">
+            <button class="btn btn-wa" type="submit">Subscribe</button>
+          </form>
+          <p class="nlmsg" id="nlmsg" hidden>Thanks — you’re on the list! 🎉</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap foot">
+    <div class="reveal">
+      <div class="brand" style="font-size:1.6rem">Rangat<b>.</b></div>
+      <p style="max-width:34ch;opacity:.85;margin:.6rem 0 0">Handpicked ethnic wear from Jodhpur, Rajasthan. Delivered across India.</p>
+      <div class="pay"><span>UPI</span><span>CARDS</span><span>COD</span><span>NET BANKING</span></div>
+    </div>
+    <div class="reveal"><h4>Shop</h4>
+      <ul><li><a href="#collections">Collections</a></li><li><a href="#shop">New In</a></li>
+        <li><a href="#shop">Kurtis</a></li><li><a href="#shop">Lehengas</a></li></ul></div>
+    <div class="reveal"><h4>Reach us</h4>
+      <ul><li><a class="js-wa" data-msg="Hi Rangat!">WhatsApp: +91 00000 00000</a></li>
+        <li><a href="#">Instagram: @rangat.jodhpur</a></li><li><a href="#">Size guide</a></li>
+        <li><a href="#">Shipping &amp; returns</a></li></ul></div>
+  </div>
+  <div class="wrap legal"><span>© <span id="yr"></span> Rangat, Jodhpur. Demo template.</span><span>Built with DM to Store</span></div>
+</footer>
+
+<!-- floating dock (mobile) -->
+<nav class="dock" aria-label="Quick navigation">
+  <a href="#top" class="active" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></a>
+  <a href="#collections" aria-label="Collections"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></a>
+  <a href="#shop" aria-label="Shop"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a1 1 0 001 1h16a1 1 0 001-1V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg></a>
+  <a href="#about" aria-label="About"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></a>
+  <a class="wa js-wa" data-msg="Hi Rangat!" aria-label="WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M.06 24l1.68-6.16A11.9 11.9 0 0 1 .16 11.9C.16 5.33 5.5 0 12.06 0a11.8 11.8 0 0 1 8.4 3.49 11.8 11.8 0 0 1 3.48 8.42c0 6.57-5.34 11.9-11.9 11.9a11.9 11.9 0 0 1-5.7-1.45L.06 24zM6.6 20.13c1.67.99 3.27 1.58 5.44 1.58 5.45 0 9.9-4.43 9.9-9.88a9.86 9.86 0 0 0-9.88-9.9C6.6 1.93 2.16 6.36 2.16 11.8c0 2.28.67 3.99 1.79 5.79l-1 3.63 3.65-.99z"/></svg></a>
+</nav>
+
+<script>
+  // ── SWAP: put the client's WhatsApp number here (country code, no + or spaces) ──
+  const PHONE = "910000000000";
+  const waLink = (msg) => `https://wa.me/${PHONE}?text=${encodeURIComponent(msg || "Hi Rangat!")}`;
+
+  document.querySelectorAll(".js-wa").forEach(el=>{
+    el.href = waLink(el.dataset.msg); el.target="_blank"; el.rel="noopener";
+  });
+  document.querySelectorAll(".js-order").forEach(btn=>{
+    const c = btn.closest(".card");
+    btn.href = waLink(`Hi Rangat! I'd like to order: ${c.dataset.name} (₹${c.dataset.price}). Is it available?`);
+    btn.target="_blank"; btn.rel="noopener";
+  });
+
+  // wishlist toggle
+  document.querySelectorAll(".wish").forEach(b=>b.addEventListener("click",e=>{
+    e.preventDefault(); b.classList.toggle("on");
+  }));
+
+  // category filter (chips + circular menu share data-filter)
+  const chips = [...document.querySelectorAll(".chip")];
+  function applyFilter(f){
+    chips.forEach(x=>x.classList.toggle("is-on", x.dataset.filter===f));
+    document.querySelectorAll("#grid .card").forEach(card=>{
+      card.hidden = !(f==="all" || card.dataset.cat===f);
+    });
+  }
+  chips.forEach(c=>c.addEventListener("click",()=>applyFilter(c.dataset.filter)));
+  document.querySelectorAll(".cat").forEach(c=>c.addEventListener("click",()=>{
+    applyFilter(c.dataset.filter);
+    document.getElementById("shop").scrollIntoView({behavior:"smooth"});
+  }));
+
+  // collection carousel: arrows + center emphasis (coverflow feel)
+  const track = document.getElementById("track2");
+  const cards = [...track.querySelectorAll(".collect")];
+  function markCenter(){
+    const mid = track.scrollLeft + track.clientWidth/2;
+    let best, bestD = Infinity;
+    cards.forEach(c=>{
+      const cc = c.offsetLeft + c.offsetWidth/2;
+      const d = Math.abs(cc - mid);
+      if(d < bestD){ bestD = d; best = c; }
+    });
+    cards.forEach(c=>c.classList.toggle("is-center", c===best));
+  }
+  let raf;
+  track.addEventListener("scroll",()=>{ cancelAnimationFrame(raf); raf = requestAnimationFrame(markCenter); });
+  const step = () => (cards[0] ? cards[0].offsetWidth + 18 : 320);
+  document.querySelector(".arw.next").addEventListener("click",()=>track.scrollBy({left:step(),behavior:"smooth"}));
+  document.querySelector(".arw.prev").addEventListener("click",()=>track.scrollBy({left:-step(),behavior:"smooth"}));
+  markCenter();
+  // start focus on the first collection
+  requestAnimationFrame(()=>{ if(cards[0]) track.scrollLeft = Math.max(0, cards[0].offsetLeft - (track.clientWidth-cards[0].offsetWidth)/2); markCenter(); });
+
+  // newsletter (no backend — demo only)
+  const nl = document.getElementById("nlform");
+  nl.addEventListener("submit",e=>{
+    e.preventDefault();
+    if(!nl.querySelector("input").value) return;
+    nl.hidden = true; document.getElementById("nlmsg").hidden = false;
+  });
+
+  document.getElementById("yr").textContent = new Date().getFullYear();
+
+  // ── first-load reveal: fade + slide-in, staggered. Above-fold triggers on load,
+  //    the rest on scroll. Everything stays visible if JS/IO is unavailable. ──
+  const reveals = [...document.querySelectorAll(".reveal")];
+  if("IntersectionObserver" in window){
+    const io = new IntersectionObserver((entries)=>{
+      entries.filter(e=>e.isIntersecting).forEach((e,i)=>{
+        e.target.style.transitionDelay = (i*70)+"ms";
+        e.target.classList.add("in");
+        io.unobserve(e.target);
+      });
+    },{threshold:0.08, rootMargin:"0px 0px -6% 0px"});
+    reveals.forEach(el=>io.observe(el));
+    // failsafe: reveal anything still hidden after 3s
+    setTimeout(()=>reveals.forEach(el=>el.classList.add("in")),3000);
+  } else {
+    reveals.forEach(el=>el.classList.add("in"));
+  }
+</script>

@@ -1,0 +1,476 @@
+<title>DM to Store</title>
+<meta name="description" content="Websites for Instagram sellers in Jodhpur — turn your DMs into a real store customers can order from.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+  /* ============================================================
+     DM TO STORE — service landing page
+     CHANGE THESE (marked EDIT):
+       • PHONE constant in the script at the bottom (your WhatsApp)
+       • SAMPLE_URL if you rebuild the sample store
+       • Instagram handle & email in the footer
+     ============================================================ */
+  :root{
+    --bg:#FBF5F2;          /* warm porcelain */
+    --surface:#FFFFFF;
+    --surface-2:#F5E9E4;   /* sunken warm */
+    --ink:#2A1B24;         /* plum-black */
+    --muted:#7C6873;       /* mauve-grey */
+    --line:#EBDDD6;
+    --accent:#DE2F6B;      /* rose magenta */
+    --accent-ink:#ffffff;
+    --accent-soft:#FCE6EE;
+    --gold:#E7A33A;        /* warm gold highlight */
+    --wa:#1FA855;          /* whatsapp */
+    --ok:#1F8A55;
+    --no:#C9526B;
+    --shadow-sm:0 1px 2px rgba(42,27,36,.06);
+    --shadow:0 2px 6px rgba(42,27,36,.06), 0 22px 48px -22px rgba(42,27,36,.30);
+    --radius:16px;
+    --maxw:1080px;
+    --disp:"Bricolage Grotesque",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --body:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme: dark){
+      --bg:#17121A; --surface:#211A25; --surface-2:#2A2130; --ink:#F6ECF1;
+      --muted:#B49FAC; --line:#352A3B; --accent:#FF5C8C; --accent-soft:#3A2130;
+      --gold:#F0B457; --wa:#25D366;
+      --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+      --shadow:0 2px 6px rgba(0,0,0,.35), 0 24px 50px -22px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#17121A; --surface:#211A25; --surface-2:#2A2130; --ink:#F6ECF1;
+    --muted:#B49FAC; --line:#352A3B; --accent:#FF5C8C; --accent-soft:#3A2130;
+    --gold:#F0B457; --wa:#25D366;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+    --shadow:0 2px 6px rgba(0,0,0,.35), 0 24px 50px -22px rgba(0,0,0,.7);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);
+       font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+  h1,h2,h3{font-family:var(--disp);font-weight:700;line-height:1.05;
+           letter-spacing:-.015em;text-wrap:balance;margin:0}
+  p{margin:0}
+  .eyebrow{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;font-weight:800;color:var(--accent)}
+  :focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:8px}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:.5em;font-family:var(--body);
+       font-weight:700;font-size:.98rem;border:none;cursor:pointer;text-align:center;
+       padding:.85em 1.4em;border-radius:999px;transition:transform .12s ease,filter .12s ease,box-shadow .12s ease}
+  .btn:active{transform:translateY(1px)}
+  .btn-wa{background:var(--wa);color:#fff;box-shadow:0 8px 20px -8px rgba(31,168,85,.7)}
+  .btn-wa:hover{filter:brightness(1.06)}
+  .btn-accent{background:var(--accent);color:var(--accent-ink)}
+  .btn-accent:hover{filter:brightness(1.06)}
+  .btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+  .btn-ghost:hover{border-color:var(--accent)}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+  /* header */
+  header.site{position:sticky;top:0;z-index:50;
+    background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:.8rem 0;gap:1rem}
+  .brand{font-family:var(--disp);font-weight:800;font-size:1.2rem;letter-spacing:-.02em;display:flex;align-items:center;gap:.5rem}
+  .brand .dot{width:26px;height:26px;border-radius:8px;background:var(--accent);color:#fff;
+              display:grid;place-items:center;font-size:.9rem;transform:rotate(-6deg)}
+  .brand b{color:var(--accent)}
+  .nav .btn{padding:.6em 1.1em;font-size:.9rem}
+
+  /* hero */
+  .hero{padding:2.6rem 0 1.4rem}
+  .hero-grid{display:grid;gap:2rem;align-items:center}
+  @media(min-width:900px){.hero-grid{grid-template-columns:1.05fr .95fr;gap:3rem}}
+  .hero h1{font-size:clamp(2.3rem,7.4vw,4rem)}
+  .hero h1 .hl{color:var(--accent)}
+  .hero .lede{color:var(--muted);font-size:1.1rem;max-width:46ch;margin:1.1rem 0 1.6rem}
+  .hero-cta{display:flex;flex-wrap:wrap;gap:.7rem}
+  .micro{margin-top:.9rem;font-size:.82rem;color:var(--muted)}
+  .micro b{color:var(--ink)}
+
+  /* transformation visual */
+  .transform{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.6rem}
+  .phone{background:var(--surface);border:1px solid var(--line);border-radius:20px;
+         padding:.9rem .8rem;box-shadow:var(--shadow)}
+  .phone .top{display:flex;align-items:center;gap:.5rem;padding:0 .2rem .6rem;border-bottom:1px solid var(--line);margin-bottom:.7rem}
+  .phone .top .av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#f09433,#dc2743 55%,#bc1888)}
+  .phone .top small{font-weight:700;font-size:.78rem}
+  .bub{max-width:80%;padding:.42rem .68rem;border-radius:14px;font-size:.78rem;margin-bottom:.4rem;line-height:1.3}
+  .bub.in{background:var(--surface-2);border-bottom-left-radius:4px}
+  .bub.me{background:var(--accent-soft);color:var(--accent);margin-left:auto;border-bottom-right-radius:4px;font-weight:600}
+  .chaos small{display:block;text-align:center;color:var(--no);font-weight:700;font-size:.72rem;margin-top:.2rem}
+  .arrow{display:grid;place-items:center;color:var(--accent);font-size:1.6rem;font-weight:800}
+  .arrow span{display:block;font-family:var(--body);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-top:.2rem}
+  .store .shot{border-radius:12px;aspect-ratio:1/1;margin-bottom:.55rem;position:relative;
+    background:radial-gradient(circle at 28% 26%,rgba(255,255,255,.22) 0 12%,transparent 13%) 0 0/30px 30px,linear-gradient(140deg,#DE2F6B,#E7A33A)}
+  .store .shot b{position:absolute;left:8px;bottom:8px;color:#fff;font-family:var(--disp);font-size:.9rem;text-shadow:0 1px 6px rgba(0,0,0,.3)}
+  .store h4{font-family:var(--body);font-size:.82rem;font-weight:700;margin:0}
+  .store .pr{font-weight:800;font-size:.9rem;margin:.15rem 0 .5rem}
+  .store .mini{width:100%;background:var(--wa);color:#fff;border-radius:999px;text-align:center;
+    font-size:.72rem;font-weight:700;padding:.42rem}
+  .store small.win{display:block;text-align:center;color:var(--ok);font-weight:700;font-size:.72rem;margin-top:.4rem}
+  @media(max-width:520px){.transform{grid-template-columns:1fr;gap:1rem}.arrow{transform:rotate(90deg)}}
+
+  /* logos / niches strip */
+  .niches{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--surface-2);margin-top:1.6rem}
+  .niches .wrap{display:flex;flex-wrap:wrap;gap:.5rem 1.6rem;justify-content:center;padding:.9rem 20px;
+    font-weight:700;font-size:.86rem;color:var(--muted)}
+  .niches span{display:flex;align-items:center;gap:.4rem}
+
+  section{padding:3.4rem 0}
+  .sec-head{max-width:36ch;margin-bottom:1.8rem}
+  .sec-head.center{margin-left:auto;margin-right:auto;text-align:center}
+  .sec-head h2{font-size:clamp(1.8rem,4.6vw,2.7rem);margin-top:.4rem}
+  .sec-head p{color:var(--muted);margin-top:.6rem}
+
+  /* problem cards */
+  .cols{display:grid;gap:1rem;grid-template-columns:1fr}
+  @media(min-width:640px){.cols{grid-template-columns:repeat(2,1fr)}}
+  @media(min-width:920px){.cols.four{grid-template-columns:repeat(4,1fr)}}
+  .pain{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1.2rem}
+  .pain .n{font-family:var(--disp);color:var(--accent);font-size:1.4rem;font-weight:800}
+  .pain b{display:block;margin:.5rem 0 .3rem;font-size:1.02rem}
+  .pain p{color:var(--muted);font-size:.92rem}
+
+  /* feature list */
+  .feat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1.3rem 1.2rem;display:flex;gap:.9rem}
+  .feat .ic{flex:none;width:40px;height:40px;border-radius:11px;background:var(--accent-soft);color:var(--accent);
+    display:grid;place-items:center;font-size:1.2rem}
+  .feat b{display:block;margin-bottom:.25rem}
+  .feat p{color:var(--muted);font-size:.92rem}
+
+  /* comparison */
+  .cmp-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);box-shadow:var(--shadow-sm)}
+  table.cmp{border-collapse:collapse;width:100%;min-width:520px;font-size:.92rem}
+  table.cmp th,table.cmp td{padding:.85rem 1rem;text-align:center;border-bottom:1px solid var(--line)}
+  table.cmp thead th{font-family:var(--disp);font-size:.95rem}
+  table.cmp thead th.you{background:var(--accent-soft);color:var(--accent);border-top-right-radius:var(--radius)}
+  table.cmp td.you{background:color-mix(in srgb,var(--accent-soft) 55%,transparent);font-weight:700}
+  table.cmp th[scope="row"],table.cmp td:first-child{text-align:left;font-weight:600}
+  table.cmp tbody tr:last-child td{border-bottom:none}
+  .yes{color:var(--ok);font-weight:800}.na{color:var(--no);font-weight:700}
+
+  /* pricing */
+  #pricing{background:var(--surface-2)}
+  .plans{display:grid;gap:1.1rem;grid-template-columns:1fr}
+  @media(min-width:760px){.plans{grid-template-columns:repeat(3,1fr);align-items:start}}
+  .plan{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:1.5rem 1.3rem;
+        display:flex;flex-direction:column;gap:.9rem;box-shadow:var(--shadow-sm)}
+  .plan.pop{border:2px solid var(--accent);box-shadow:var(--shadow);position:relative}
+  .plan.pop::before{content:"Most popular";position:absolute;top:-.75rem;left:50%;transform:translateX(-50%);
+    background:var(--accent);color:#fff;font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+    padding:.3rem .8rem;border-radius:999px;white-space:nowrap}
+  .plan .name{font-family:var(--disp);font-size:1.25rem;font-weight:800}
+  .plan .tag{color:var(--muted);font-size:.88rem;margin-top:-.5rem}
+  .plan .cost{font-family:var(--disp);font-size:2.1rem;font-weight:800;line-height:1}
+  .plan .cost small{font-family:var(--body);font-size:.8rem;color:var(--muted);font-weight:600}
+  .plan ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.55rem;font-size:.92rem}
+  .plan li{display:flex;gap:.55rem;align-items:flex-start}
+  .plan li::before{content:"✓";color:var(--ok);font-weight:800;flex:none}
+  .plan .btn{width:100%;margin-top:auto}
+  .care{margin-top:1.1rem;background:var(--surface);border:1px dashed var(--accent);border-radius:16px;
+    padding:1.2rem 1.3rem;display:flex;flex-wrap:wrap;gap:.6rem 1.2rem;align-items:center;justify-content:space-between}
+  .care b{font-family:var(--disp);font-size:1.1rem}
+  .care .amt{font-family:var(--disp);font-weight:800;font-size:1.4rem;color:var(--accent)}
+  .care p{color:var(--muted);font-size:.9rem;max-width:48ch}
+  .finep{color:var(--muted);font-size:.82rem;margin-top:1rem;text-align:center}
+
+  /* steps */
+  .steps{display:grid;gap:1rem;grid-template-columns:1fr}
+  @media(min-width:760px){.steps{grid-template-columns:repeat(3,1fr)}}
+  .step{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1.3rem}
+  .step .n{width:34px;height:34px;border-radius:10px;background:var(--ink);color:var(--bg);
+    display:grid;place-items:center;font-family:var(--disp);font-weight:800;margin-bottom:.7rem}
+  .step b{display:block;margin-bottom:.3rem}.step p{color:var(--muted);font-size:.93rem}
+
+  /* faq */
+  .faq details{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:.2rem 1.1rem;margin-bottom:.7rem}
+  .faq summary{cursor:pointer;font-weight:700;padding:.95rem 0;list-style:none;display:flex;justify-content:space-between;gap:1rem}
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary::after{content:"+";color:var(--accent);font-weight:800;font-size:1.3rem;line-height:1}
+  .faq details[open] summary::after{content:"–"}
+  .faq details p{color:var(--muted);padding:0 0 1rem;font-size:.95rem}
+
+  /* final cta */
+  .final{background:linear-gradient(135deg,var(--accent),#B0245B 70%,#7A2E6E);color:#fff;border-radius:24px;
+    padding:clamp(2rem,5vw,3.4rem);text-align:center;box-shadow:var(--shadow)}
+  .final h2{color:#fff;font-size:clamp(1.8rem,5vw,2.8rem)}
+  .final p{color:rgba(255,255,255,.9);max-width:44ch;margin:.9rem auto 1.6rem}
+  .final .btn-wa{background:#fff;color:#0a7a3f}
+  .final .btn-wa:hover{filter:none;transform:translateY(-1px)}
+  .final small{display:block;margin-top:.9rem;color:rgba(255,255,255,.8);font-size:.82rem}
+
+  footer.site{padding:2.6rem 0;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem}
+  .foot{display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;align-items:center}
+  .foot a:hover{color:var(--accent)}
+  .foot .links{display:flex;gap:1.2rem;flex-wrap:wrap}
+</style>
+
+<header class="site">
+  <div class="wrap nav">
+    <a class="brand" href="#top"><span class="dot">→</span>DM <b>to</b> Store</a>
+    <a class="btn btn-wa js-wa" data-msg="Hi! I saw your page and I'd like a website for my Instagram business.">Message on WhatsApp</a>
+  </div>
+</header>
+
+<main id="top">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">Websites for Instagram sellers · Jodhpur</span>
+        <h1>Turn your Instagram DMs into a <span class="hl">store that sells for you.</span></h1>
+        <p class="lede">Stop typing “price DM 🙏” fifty times a day. Give your customers one link to
+          see everything and order on WhatsApp in two taps — while you focus on your products.</p>
+        <div class="hero-cta">
+          <a class="btn btn-wa js-wa" data-msg="Hi! I'd like a free preview of a website for my Instagram business.">Get a free preview</a>
+          <a class="btn btn-ghost" href="#pricing">See pricing</a>
+        </div>
+        <p class="micro">✦ Ready in <b>2–4 days</b> &nbsp; ✦ Works on <b>every phone</b> &nbsp; ✦ <b>You own it</b> forever</p>
+      </div>
+
+      <div class="transform" aria-label="From messy DMs to a clean store">
+        <div class="phone chaos" aria-hidden="true">
+          <div class="top"><span class="av"></span><small>your.page</small></div>
+          <div class="bub in">Price?</div>
+          <div class="bub in">Is this available??</div>
+          <div class="bub in">DM me rate</div>
+          <div class="bub me">1899, DM for order 🙏</div>
+          <div class="bub in">COD? size M?</div>
+          <small>50+ of these a day. Half never buy.</small>
+        </div>
+        <div class="arrow">➜<span>becomes</span></div>
+        <div class="phone store" aria-hidden="true">
+          <div class="top"><span class="av" style="background:var(--accent)"></span><small>yourstore.com</small></div>
+          <div class="shot"><b>Marigold Anarkali</b></div>
+          <h4>Marigold Anarkali Set</h4>
+          <div class="pr">₹1,899</div>
+          <div class="mini">Order on WhatsApp →</div>
+          <small class="win">Ordered in 2 taps. No back-and-forth.</small>
+        </div>
+      </div>
+    </div>
+    <div class="niches">
+      <div class="wrap">
+        <span>👗 Boutiques</span><span>🎂 Home bakers</span><span>💍 Jewellery</span>
+        <span>🧵 Handmade & decor</span><span>👜 Accessories</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Sound familiar?</span>
+        <h2>Selling in DMs is quietly costing you sales.</h2>
+        <p>Instagram is great for getting seen. It’s terrible for actually selling. Here’s where the money leaks out.</p>
+      </div>
+      <div class="cols four">
+        <div class="pain"><div class="n">01</div><b>Slow replies lose buyers</b>
+          <p>Someone asks “price?” at 11pm. You reply next morning. They’ve already bought elsewhere.</p></div>
+        <div class="pain"><div class="n">02</div><b>Your best pieces vanish</b>
+          <p>Products get buried under old stories and posts. New visitors can’t find what you sell.</p></div>
+        <div class="pain"><div class="n">03</div><b>New buyers don’t trust a DM</b>
+          <p>Paying an unknown page feels risky. A real website signals you’re a real, safe business.</p></div>
+        <div class="pain"><div class="n">04</div><b>You are the website</b>
+          <p>Answering the same “size? COD? price?” all day is a full-time job that doesn’t scale.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHAT YOU GET -->
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">What you get</span>
+        <h2>One link that does the selling for you.</h2>
+      </div>
+      <div class="cols">
+        <div class="feat"><div class="ic">🔗</div><div><b>Your whole catalogue, one link</b>
+          <p>Put it in your Instagram bio. Customers browse everything, any time — even while you sleep.</p></div></div>
+        <div class="feat"><div class="ic">💬</div><div><b>Order on WhatsApp in 2 taps</b>
+          <p>No confusing checkout. They tap a product, WhatsApp opens with the order ready to send.</p></div></div>
+        <div class="feat"><div class="ic">✨</div><div><b>Looks professional = more trust</b>
+          <p>A clean site makes buyers comfortable paying more, and ordering bigger.</p></div></div>
+        <div class="feat"><div class="ic">📱</div><div><b>Built mobile-first</b>
+          <p>90% of your buyers are on phones. Your site is designed for their thumb first.</p></div></div>
+        <div class="feat"><div class="ic">🔎</div><div><b>Show up on Google</b>
+          <p>People searching “boutique in Jodhpur” can find you — not just your Instagram followers.</p></div></div>
+        <div class="feat"><div class="ic">🔐</div><div><b>You own everything</b>
+          <p>Your domain, your customers, your store. One Instagram ban can’t wipe out your business.</p></div></div>
+      </div>
+      <p style="text-align:center;margin-top:1.6rem">
+        <a class="btn btn-ghost" id="sampleBtn" target="_blank" rel="noopener">👀 See a live sample store</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- COMPARISON -->
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head center">
+        <span class="eyebrow">Why not just Instagram or Linktree?</span>
+        <h2>See the difference.</h2>
+      </div>
+      <div class="cmp-wrap">
+        <table class="cmp">
+          <thead><tr><th></th><th>Instagram only</th><th>Linktree</th><th class="you">Your DM to Store site</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">One link to your full catalogue</th><td class="na">✗</td><td>Links only</td><td class="you"><span class="yes">✓</span></td></tr>
+            <tr><th scope="row">Order without endless DMs</th><td class="na">✗</td><td class="na">✗</td><td class="you"><span class="yes">✓</span></td></tr>
+            <tr><th scope="row">Looks like a real, trusted brand</th><td>So-so</td><td class="na">✗</td><td class="you"><span class="yes">✓</span></td></tr>
+            <tr><th scope="row">Found on Google</th><td class="na">✗</td><td class="na">✗</td><td class="you"><span class="yes">✓</span></td></tr>
+            <tr><th scope="row">You own your customers</th><td class="na">✗</td><td class="na">✗</td><td class="you"><span class="yes">✓</span></td></tr>
+            <tr><th scope="row">Survives if your account gets banned</th><td class="na">✗</td><td class="na">✗</td><td class="you"><span class="yes">✓</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing">
+    <div class="wrap">
+      <div class="sec-head center">
+        <span class="eyebrow">Simple, honest pricing</span>
+        <h2>Pick a package. No hidden charges.</h2>
+        <p>One-time build fees below. Made for Indian small businesses — priced to pay for itself in a few orders.</p>
+      </div>
+      <div class="plans">
+        <div class="plan">
+          <div class="name">Starter</div>
+          <p class="tag">Perfect to get off the ground</p>
+          <div class="cost">₹2,999 <small>one-time</small></div>
+          <ul>
+            <li>1-page mobile website</li>
+            <li>Replaces your link-in-bio</li>
+            <li>Up to 12 products</li>
+            <li>Order-on-WhatsApp buttons</li>
+            <li>Instagram, call &amp; location links</li>
+            <li>Ready in ~2 days</li>
+          </ul>
+          <a class="btn btn-ghost js-wa" data-msg="Hi! I'm interested in the Starter package (₹2,999) for my Instagram business.">Choose Starter</a>
+        </div>
+        <div class="plan pop">
+          <div class="name">Boutique</div>
+          <p class="tag">Our most-loved package</p>
+          <div class="cost">₹8,999 <small>one-time</small></div>
+          <ul>
+            <li>Everything in Starter, plus:</li>
+            <li>Up to 40 products with categories</li>
+            <li>Lookbook / gallery &amp; reviews</li>
+            <li>About page that builds trust</li>
+            <li>Your own domain (yourname.com)</li>
+            <li>Shows up on Google (basic SEO)</li>
+            <li>Ready in 3–4 days</li>
+          </ul>
+          <a class="btn btn-accent js-wa" data-msg="Hi! I'm interested in the Boutique package (₹8,999) for my Instagram business.">Choose Boutique</a>
+        </div>
+        <div class="plan">
+          <div class="name">Store</div>
+          <p class="tag">Full online shop with payments</p>
+          <div class="cost">₹24,999 <small>onwards</small></div>
+          <ul>
+            <li>Everything in Boutique, plus:</li>
+            <li>Online payments — UPI &amp; cards</li>
+            <li>Real cart &amp; checkout</li>
+            <li>Unlimited products</li>
+            <li>Order &amp; stock management</li>
+            <li>Timeline shared on quote</li>
+          </ul>
+          <a class="btn btn-ghost js-wa" data-msg="Hi! I'd like a quote for the Store package (online payments) for my business.">Get a quote</a>
+        </div>
+      </div>
+
+      <div class="care">
+        <div>
+          <b>Care Plan — keep it running</b>
+          <p>Hosting, backups, up to 5 product/photo updates a month, festive banners, and “WhatsApp me if anything breaks.” Optional, cancel anytime.</p>
+        </div>
+        <div style="text-align:right"><span class="amt">₹799</span><small style="color:var(--muted)"> /month</small></div>
+      </div>
+      <p class="finep">+ Domain ₹800–1,200/year and hosting billed at cost (or bundled into the Care Plan). 50% advance to begin. GST extra where applicable.</p>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head center"><span class="eyebrow">How it works</span><h2>Live in three easy steps.</h2></div>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><b>Message me on WhatsApp</b>
+          <p>Send your Instagram handle and tell me what you sell. Takes two minutes.</p></div>
+        <div class="step"><div class="n">2</div><b>Get a free preview + quote</b>
+          <p>I send a short video showing what your store could look like, and a fixed price. No obligation.</p></div>
+        <div class="step"><div class="n">3</div><b>Go live in 2–4 days</b>
+          <p>You approve, I build, and your link is ready to drop into your bio. That simple.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section style="padding-top:0">
+    <div class="wrap" style="max-width:760px">
+      <div class="sec-head center"><span class="eyebrow">Questions</span><h2>Good to know.</h2></div>
+      <div class="faq">
+        <details open><summary>I already have Instagram. Why do I need this?</summary>
+          <p>Instagram gets you seen; it doesn’t help people buy. A site gives customers one place to browse everything and order instantly — so you stop losing buyers who won’t wait for a DM reply.</p></details>
+        <details><summary>Will my customers have to learn something new?</summary>
+          <p>No. They still order on WhatsApp — the app they already use. The site just makes it faster and clearer, so more of them actually complete the order.</p></details>
+        <details><summary>How long does it take?</summary>
+          <p>Starter is usually ready in about 2 days, Boutique in 3–4. I’ll give you an exact date before we start.</p></details>
+        <details><summary>Do I need to know anything technical?</summary>
+          <p>Not at all. You send me your product photos and prices over WhatsApp; I handle the domain, hosting, and every technical part.</p></details>
+        <details><summary>What if I want changes later?</summary>
+          <p>Small tweaks are covered by the Care Plan (₹799/month). Bigger changes are quoted upfront so there are never surprise bills.</p></details>
+        <details><summary>How do payments work?</summary>
+          <p>On Starter and Boutique, customers order via WhatsApp and pay you how you already accept (UPI, COD, etc.). The Store package adds automatic online payments — UPI and cards — on the site itself.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="final">
+        <h2>See your store before you pay a rupee.</h2>
+        <p>Message “Hi” on WhatsApp with your Instagram handle. I’ll send back a free 60-second preview of what your store could look like — no charge, no obligation.</p>
+        <a class="btn btn-wa js-wa" data-msg="Hi! Here's my Instagram handle: ____. Can you send me a free preview of my store?">Message on WhatsApp for a free preview</a>
+        <small>Based in Jodhpur · Working with sellers across India</small>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap foot">
+    <div class="brand"><span class="dot">→</span>DM <b>to</b> Store</div>
+    <div class="links">
+      <a class="js-wa" data-msg="Hi! I'd like to know more about a website for my business.">WhatsApp</a>
+      <!-- EDIT: your real Instagram + email -->
+      <a href="#">Instagram</a>
+      <a href="#">Email</a>
+    </div>
+    <div>© <span id="yr"></span> DM to Store · Jodhpur, Rajasthan</div>
+  </div>
+</footer>
+
+<script>
+  // ── EDIT: your WhatsApp number, country code first, digits only (no + or spaces) ──
+  const PHONE = "910000000000";
+  // ── EDIT: your published sample store URL ──
+  const SAMPLE_URL = "https://claude.ai/code/artifact/fdf6cf00-0153-4748-bbd5-0bf6d977c228";
+
+  const waLink = (msg) => `https://wa.me/${PHONE}?text=${encodeURIComponent(msg||"Hi!")}`;
+  document.querySelectorAll(".js-wa").forEach(el=>{
+    el.href = waLink(el.dataset.msg); el.target="_blank"; el.rel="noopener";
+  });
+  const sb = document.getElementById("sampleBtn");
+  if(sb){ sb.href = SAMPLE_URL; }
+  document.getElementById("yr").textContent = new Date().getFullYear();
+</script>

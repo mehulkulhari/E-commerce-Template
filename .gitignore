@@ -39,3 +39,17 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
+
+# Local AI / editor tooling — not part of the website
+/.agents/
+/.claude/
+/.mcp.json
+/skills-lock.json
+/.playwright/
+
+# Catalogue originals (large, and phone photos carry GPS location).
+# The site ships the optimised copies in public/catalog/ and src/data/catalog.json.
+/catalog/photos/*
+!/catalog/photos/.gitkeep

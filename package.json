@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "catalog": "node scripts/import-catalog.mjs",
+    "predev": "node scripts/import-catalog.mjs --soft",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -19,6 +21,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
+    "shadcn": "^4.21.0",
+    "sharp": "^0.35.4",
     "typescript": "^5"
   }
 }

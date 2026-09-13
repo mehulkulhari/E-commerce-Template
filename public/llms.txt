@@ -1,0 +1,35 @@
+# DM to Store
+
+> Freelance web design service for Instagram sellers in Jodhpur, India.
+> We turn Instagram DM-based businesses into real, fast, mobile-first websites
+> that let customers browse a full catalogue and order on WhatsApp in two taps.
+
+## Services
+
+- **Starter** (₹2,999 one-time): 1-page mobile website, up to 12 products, WhatsApp order buttons, ready in ~2 days
+- **Boutique** (₹8,999 one-time): Multi-page site, up to 40 products, domain, basic SEO, ready in 3–4 days
+- **Store** (₹24,999 onwards): Full online shop with UPI/card payments, cart, stock management
+- **Care Plan** (₹799/month): Hosting, backups, up to 5 updates/month, cancel anytime
+
+## Who we serve
+
+Boutiques, home bakers, jewellery sellers, handmade & decor sellers, accessory brands — primarily Instagram-based small businesses in Jodhpur and across India.
+
+## Contact
+
+WhatsApp: [ACTION REQUIRED — add real number]
+Instagram: [ACTION REQUIRED — add real handle]
+Email: [ACTION REQUIRED — add real email]
+Location: Jodhpur, Rajasthan, India
+
+## Legal
+
+- Privacy Policy: /legal/privacy-policy
+- Terms of Service: /legal/terms
+- Refund Policy: /legal/refund
+
+## Technical
+
+This site is built with Next.js and uses WhatsApp links for all customer interactions.
+No user accounts, no tracking cookies, no analytics.
+Fonts are self-hosted (next/font) — no Google Fonts CDN requests.
