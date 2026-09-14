@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: { absolute: "Rangat Boutique — Live Sample Store" },
+  title: { absolute: "Impact Store — Sportswear & Streetwear" },
   description:
-    "A live sample store built by DM to Store — a mobile-first ethnic-wear boutique with WhatsApp ordering, a collection carousel, and quick view. This is a demo template, not a real shop.",
+    "Impact Store — authentic jerseys, sneakers, tees, shirts and denim from the brands you want. Browse the drop and order on WhatsApp. Shipped across India.",
   alternates: { canonical: "/sample" },
-  // Demo/portfolio page — keep the fictional boutique out of search results.
-  robots: { index: false, follow: true },
+  robots: { index: true, follow: true },
   openGraph: {
     type: "website",
     url: "/sample",
-    title: "Rangat Boutique — Live Sample Store",
+    title: "Impact Store — Sportswear & Streetwear",
     description:
-      "A mobile-first boutique storefront with WhatsApp ordering, built by DM to Store. Demo template.",
+      "Authentic jerseys, sneakers, tees, shirts and denim. Browse the drop and order on WhatsApp. Shipped across India.",
   },
 };
 

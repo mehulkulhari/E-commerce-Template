@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "catalog": "node scripts/import-catalog.mjs",
+    "catalog:folders": "node scripts/import-store-folders.mjs && node scripts/import-catalog.mjs",
     "predev": "node scripts/import-catalog.mjs --soft",
     "dev": "next dev",
     "build": "next build",

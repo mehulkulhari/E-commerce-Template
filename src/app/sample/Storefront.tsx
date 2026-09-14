@@ -12,9 +12,9 @@ import styles from "./sample.module.css";
                        `npm run catalog`. See catalog/README.md.
    ─────────────────────────────────────────────────────────────── */
 const PHONE = "910000000000";
-const INSTAGRAM = "https://www.instagram.com/rangat.jodhpur/";
-const IS_DEMO_BRAND = true;
-const STORE_KEY = "rangat:saved";
+const INSTAGRAM = "https://www.instagram.com/impact.store/";
+const IS_DEMO_BRAND = false;
+const STORE_KEY = "impact:saved";
 const wa = (msg: string) => `https://wa.me/${PHONE}?text=${encodeURIComponent(msg)}`;
 
 /* Saved pieces live in localStorage, read through useSyncExternalStore so the
@@ -97,19 +97,19 @@ function fromCatalog(c: Catalog): Item[] {
   }));
 }
 
+// Men's apparel, body measurements in inches.
 const SIZE_CHART = [
-  { size: "XS", bust: 32, waist: 26, hip: 35 },
-  { size: "S", bust: 34, waist: 28, hip: 37 },
-  { size: "M", bust: 36, waist: 30, hip: 39 },
-  { size: "L", bust: 38, waist: 32, hip: 41 },
-  { size: "XL", bust: 40, waist: 34, hip: 43 },
-  { size: "XXL", bust: 42, waist: 36, hip: 45 },
+  { size: "S", chest: 36, waist: 30 },
+  { size: "M", chest: 38, waist: 32 },
+  { size: "L", chest: 40, waist: 34 },
+  { size: "XL", chest: 42, waist: 36 },
+  { size: "XXL", chest: 44, waist: 38 },
 ];
 const ANNOUNCE = [
-  "Complimentary shipping across India above ₹1,999",
-  "New arrivals every Friday",
-  "Easy 7-day exchange",
-  "Handcrafted in Jodhpur",
+  "Free shipping across India above ₹1,999",
+  "New drops every week",
+  "Easy 7-day returns",
+  "100% authentic",
 ];
 
 const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
@@ -298,11 +298,11 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
     if (catalog.site.looks.length >= 3) {
       return catalog.site.looks.slice(0, 3).map((img, n) => ({
         key: img.src, title: `Look ${String(n + 1).padStart(2, "0")}`, sub: "The lookbook", img, tone: TONES[n],
-        href: wa(`Hello Rangat, I would like to know more about look ${n + 1} from your lookbook.`),
+        href: wa(`Hello Impact Store, I would like to know more about look ${n + 1} from your lookbook.`),
       }));
     }
     if (!live) {
-      return DEMO_LOOKS.map((l) => ({ key: l.title, ...l, href: wa(`Hello Rangat, I would like to see the ${l.title} looks.`) }));
+      return DEMO_LOOKS.map((l) => ({ key: l.title, ...l, href: wa(`Hello Impact Store, I would like to see the ${l.title} looks.`) }));
     }
     if (edits.length >= 3) {
       return edits.slice(0, 3).map((e) => {
@@ -323,26 +323,26 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
   const chips = [{ key: "all", label: "All" }, ...categories.map((c) => ({ key: `c:${c}`, label: c }))];
 
   const orderMsg = (p: Item) =>
-    `Hello Rangat, I would like to order the ${p.name}${p.code ? ` (code #${p.code})` : ""}${size ? `, size ${size}` : ""}, priced at ${inr(p.price)}. Is it available?`;
+    `Hello Impact Store, I would like to order the ${p.name}${p.code ? ` (code #${p.code})` : ""}${size ? `, size ${size}` : ""}, priced at ${inr(p.price)}. Is it available?`;
 
   const heroCopy = (
     <>
-      <span className={`${styles.label} reveal`}>{live ? "The collection" : "Festive Edit, 2026"}</span>
-      <h1 className={`${styles.heroTitle} reveal`}>Woven slowly, <em>worn for years.</em></h1>
+      <span className={`${styles.label} reveal`}>New season, 2026</span>
+      <h1 className={`${styles.heroTitle} reveal`}>Wear the <em>impact.</em></h1>
       <p className={`${styles.heroSub} reveal`}>
-        Small-batch kurtas, suit sets and lehengas from a home studio in Jodhpur. Browse the
-        collection, then order on WhatsApp in two taps.
+        Jerseys, sneakers, tees and denim from the brands you actually want. Browse the drop,
+        then order on WhatsApp in two taps.
       </p>
       <div className={`${styles.heroActions} reveal`}>
-        <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => goShop("all")}>Shop the collection</button>
-        {edits.length >= 2 && <a className={`${styles.btn} ${styles.btnLine}`} href="#collections">View edits</a>}
+        <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => goShop("all")}>Shop all</button>
+        {edits.length >= 2 && <a className={`${styles.btn} ${styles.btnLine}`} href="#collections">Shop by category</a>}
       </div>
     </>
   );
 
   return (
     <div className={styles.boutique}>
-      {IS_DEMO_BRAND && <p className={styles.demoNote}>Demonstration template · Rangat is a fictional boutique</p>}
+      {IS_DEMO_BRAND && <p className={styles.demoNote}>Demonstration template</p>}
 
       <div className={styles.announce} aria-label="Store announcements">
         <div className={styles.announceTrack}>
@@ -369,9 +369,9 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
               ))}
               <a className={styles.navLink} href="#story">Our Story</a>
             </nav>
-            <a className={styles.brand} href="#top" aria-label="Rangat, home">
-              <span className={styles.brandMark}>RANGAT</span>
-              <span className={styles.brandSub}>Jodhpur</span>
+            <a className={styles.brand} href="#top" aria-label="Impact Store, home">
+              <span className={styles.brandMark}>IMPACT STORE</span>
+              <span className={styles.brandSub}>Sport · Street</span>
             </a>
             <div className={styles.navUtils}>
               <button className={`${styles.iconBtn} ${saved.length ? styles.wishOn : ""}`} onClick={() => goShop("saved")}
@@ -380,7 +380,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
                 {saved.length > 0 && <span className={styles.count}>{saved.length}</span>}
               </button>
               <a className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm} ${styles.navWa}`}
-                href={wa("Hello Rangat, I would like to know more about your collection.")} target="_blank" rel="noopener noreferrer">
+                href={wa("Hello Impact Store, I would like to know more about your collection.")} target="_blank" rel="noopener noreferrer">
                 Order on WhatsApp
               </a>
             </div>
@@ -392,7 +392,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
       {menuOpen && (
         <div className={styles.menuOverlay} role="dialog" aria-modal="true" aria-label="Menu">
           <div className={styles.menuTop}>
-            <span className={styles.brandMark}>RANGAT</span>
+            <span className={styles.brandMark}>IMPACT STORE</span>
             <button ref={closeRef} className={styles.iconBtn} onClick={() => setMenuOpen(false)} aria-label="Close menu"><IconClose /></button>
           </div>
           <nav className={styles.menuLinks} aria-label="Mobile">
@@ -404,7 +404,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
             <button className={styles.menuLink} onClick={() => goShop("saved")}>Saved{saved.length ? ` (${saved.length})` : ""}</button>
           </nav>
           <div className={styles.menuFoot}>
-            <a className={`${styles.btn} ${styles.btnPrimary}`} href={wa("Hello Rangat, I would like to know more about your collection.")} target="_blank" rel="noopener noreferrer">
+            <a className={`${styles.btn} ${styles.btnPrimary}`} href={wa("Hello Impact Store, I would like to know more about your collection.")} target="_blank" rel="noopener noreferrer">
               <IconWhatsApp /> Order on WhatsApp
             </a>
             <a className={styles.linkRule} href={INSTAGRAM} target="_blank" rel="noopener noreferrer">Instagram</a>
@@ -442,7 +442,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
             <div className={styles.trustItem}><IconTruck />Shipping above ₹1,999</div>
             <div className={styles.trustItem}><IconReturn />7-day exchange</div>
             <div className={styles.trustItem}><IconWallet />Cash on delivery</div>
-            <div className={styles.trustItem}><IconThread />Handloom fabrics</div>
+            <div className={styles.trustItem}><IconThread />100% authentic</div>
           </div>
         </div>
 
@@ -582,7 +582,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
             <div className={styles.wrap}>
               <div className={`${styles.secHead} ${styles.secHeadCenter} reveal`}>
                 <span className={styles.label}>Campaign</span>
-                <h2 className={styles.secTitle}>The Jodhpur lookbook</h2>
+                <h2 className={styles.secTitle}>The lookbook</h2>
               </div>
             </div>
             <div className={`${styles.lookGrid} reveal`}>
@@ -608,23 +608,23 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
           <div className={styles.wrap}>
             <div className={styles.split}>
               <div className={`${styles.splitMedia} reveal`}>
-                <Media img={storyImg} tone="tEcru" motif="mBandhani" sizes={HALF_SIZES} alt={catalog.site.story ? "Inside the Rangat studio" : ""} />
+                <Media img={storyImg} tone="tEcru" sizes={HALF_SIZES} alt={catalog.site.story ? "Impact Store" : ""} />
               </div>
               <div className={`${styles.splitBody} reveal`}>
                 <span className={styles.label}>Our story</span>
-                <h2>Made in the Blue City, kept deliberately small.</h2>
+                <h2>Only the gear worth wearing.</h2>
                 <p>
-                  Rangat began as an Instagram page run from a home studio in Jodhpur. We work with a
-                  handful of block printers and bandhani artisans within a day’s drive, and we buy in
-                  short runs, so a print rarely repeats.
+                  Impact Store started as a way to get authentic sportswear and streetwear to people who
+                  care how they look, without the markup and the endless wait. Jerseys, sneakers, tees,
+                  shirts and denim from the brands you actually want.
                 </p>
                 <p>
-                  Every piece is checked by hand before it is packed. If something is not right, we would
-                  rather hold it back than send it out.
+                  Every piece is checked before it ships. If it is not right, we would rather hold it
+                  back than send it out.
                 </p>
-                <p className={styles.quote}>“We would rather sell twenty pieces we are proud of than two hundred we are not.”</p>
+                <p className={styles.quote}>“We stock what we would wear ourselves, and nothing we would not.”</p>
                 <div style={{ marginTop: "1.8rem" }}>
-                  <a className={`${styles.btn} ${styles.btnLine}`} href={wa("Hello Rangat, I have a question about sizing and fabric.")} target="_blank" rel="noopener noreferrer">
+                  <a className={`${styles.btn} ${styles.btnLine}`} href={wa("Hello Impact Store, I have a question about sizing and fabric.")} target="_blank" rel="noopener noreferrer">
                     Talk to us
                   </a>
                 </div>
@@ -639,9 +639,9 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
         <section className={`${styles.sectionTight} ${styles.band}`}>
           <div className={styles.wrap}>
             <div className={`${styles.secHead} ${styles.secHeadCenter} reveal`}>
-              <span className={styles.label}>@rangat.jodhpur</span>
+              <span className={styles.label}>@impact.store</span>
               <h2 className={styles.secTitle}>Follow along</h2>
-              <p className={styles.secNote}>New pieces reach Instagram first. Tag us when your order arrives.</p>
+              <p className={styles.secNote}>New drops land on Instagram first. Tag us when your order arrives.</p>
             </div>
             <div className={`${styles.igGrid} reveal`}>
               {igTiles.map((t) => (
@@ -685,8 +685,8 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
         <div className={styles.wrap}>
           <div className={styles.footTop}>
             <div>
-              <span className={styles.brandMark}>RANGAT</span>
-              <p className={styles.footBrandBlurb}>Small-batch ethnic wear from Jodhpur, Rajasthan. Delivered across India.</p>
+              <span className={styles.brandMark}>IMPACT STORE</span>
+              <p className={styles.footBrandBlurb}>Authentic sportswear and streetwear. Shipped across India.</p>
               <div className={styles.payRow}><span>UPI</span><span>Cards</span><span>Net banking</span><span>COD</span></div>
             </div>
             <div className={styles.footCol}>
@@ -704,7 +704,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
                 <li><button onClick={() => setGuideOpen(true)}>Size guide</button></li>
                 <li><button onClick={() => setInfo("shipping")}>Shipping and returns</button></li>
                 <li><button onClick={() => setInfo("contact")}>Contact us</button></li>
-                <li><a href={wa("Hello Rangat, I need help with an order.")} target="_blank" rel="noopener noreferrer">WhatsApp us</a></li>
+                <li><a href={wa("Hello Impact Store, I need help with an order.")} target="_blank" rel="noopener noreferrer">WhatsApp us</a></li>
               </ul>
             </div>
             <div className={styles.footCol}>
@@ -719,7 +719,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
             </div>
           </div>
           <div className={styles.footBottom}>
-            <span>© {year} Rangat, Jodhpur.{IS_DEMO_BRAND ? " Demonstration template." : ""}</span>
+            <span>© {year} Impact Store.{IS_DEMO_BRAND ? " Demonstration template." : ""}</span>
             <span>Built by DM to Store</span>
           </div>
         </div>
@@ -734,7 +734,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
           <IconHeart />
           {saved.length > 0 && <span className={styles.count}>{saved.length}</span>}
         </button>
-        <a className={styles.dockWa} href={wa("Hello Rangat!")} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><IconWhatsApp /></a>
+        <a className={styles.dockWa} href={wa("Hello Impact Store!")} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><IconWhatsApp /></a>
       </nav>
 
       {/* ── Quick view ── */}
@@ -794,7 +794,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
                   </a>
                 ) : (
                   <a className={`${styles.btn} ${styles.btnLine}`} target="_blank" rel="noopener noreferrer"
-                    href={wa(`Hello Rangat, will the ${quick.name}${quick.code ? ` (code #${quick.code})` : ""} be back in stock?`)}>
+                    href={wa(`Hello Impact Store, will the ${quick.name}${quick.code ? ` (code #${quick.code})` : ""} be back in stock?`)}>
                     Ask about restock
                   </a>
                 )}
@@ -802,7 +802,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
                   {saved.includes(quick.id) ? "Saved" : "Save"}
                 </button>
               </div>
-              <p className={styles.modalNote}><IconInfo /> Dispatched from Jodhpur in 2 to 3 working days.</p>
+              <p className={styles.modalNote}><IconInfo /> Dispatched in 2 to 3 working days.</p>
             </div>
           </div>
         </div>
@@ -819,18 +819,18 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
             <div className={styles.tableScroll}>
               <table className={styles.guideTable}>
                 <caption className="sr-only">Body measurements in inches</caption>
-                <thead><tr><th scope="col">Size</th><th scope="col">Bust</th><th scope="col">Waist</th><th scope="col">Hip</th></tr></thead>
+                <thead><tr><th scope="col">Size</th><th scope="col">Chest</th><th scope="col">Waist</th></tr></thead>
                 <tbody>
                   {SIZE_CHART.map((r) => (
-                    <tr key={r.size}><th scope="row">{r.size}</th><td>{r.bust}&quot;</td><td>{r.waist}&quot;</td><td>{r.hip}&quot;</td></tr>
+                    <tr key={r.size}><th scope="row">{r.size}</th><td>{r.chest}&quot;</td><td>{r.waist}&quot;</td></tr>
                   ))}
                 </tbody>
               </table>
             </div>
             <p className={styles.guideNote}>
-              Measurements are of the body, not the garment, and are approximate. Our kurtas are cut
-              relaxed. If you are between two sizes, take the larger one. Unsure? Send us your
-              measurements on WhatsApp and we will tell you honestly what will fit.
+              Body measurements in inches, not the garment, and approximate. Fits vary by brand. If you
+              are between two sizes, take the larger one. Shoes are in UK sizes. Unsure? Send us the
+              product and your size on WhatsApp and we will help you get it right.
             </p>
           </div>
         </div>
@@ -847,11 +847,11 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
                 <span className={styles.label}>Good to know</span>
                 <h3 className={styles.modalName} style={{ marginTop: ".5rem" }}>Shipping and returns</h3>
                 <div className={styles.infoBody}>
-                  <div><h4>Dispatch</h4><p>Orders leave our Jodhpur studio within 2 to 3 working days.</p></div>
-                  <div><h4>Delivery</h4><p>Typically 3 to 7 working days across India. Shipping is complimentary on orders above ₹1,999.</p></div>
+                  <div><h4>Dispatch</h4><p>Orders are dispatched within 2 to 3 working days.</p></div>
+                  <div><h4>Delivery</h4><p>Typically 3 to 7 working days across India. Shipping is free on orders above ₹1,999.</p></div>
                   <div><h4>Cash on delivery</h4><p>Available on most pin codes. We will confirm on WhatsApp when you order.</p></div>
-                  <div><h4>Exchange</h4><p>Seven days from delivery for an unworn piece with tags intact. Message us on WhatsApp and we will arrange it.</p></div>
-                  <div><h4>Made by hand</h4><p>Block prints and bandhani vary slightly piece to piece. That variation is the craft, not a defect.</p></div>
+                  <div><h4>Returns</h4><p>Seven days from delivery for an unworn piece with tags intact. Message us on WhatsApp and we will arrange it.</p></div>
+                  <div><h4>Authenticity</h4><p>We stock authentic pieces only. If anything arrives not as described, we will make it right.</p></div>
                 </div>
               </>
             ) : (
@@ -860,11 +860,11 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
                 <h3 className={styles.modalName} style={{ marginTop: ".5rem" }}>Contact us</h3>
                 <div className={styles.infoBody}>
                   <div><h4>WhatsApp</h4><p>The fastest way to reach us. A real person replies, usually within the hour.</p></div>
-                  <div><h4>Studio</h4><p>Jodhpur, Rajasthan. Visits by appointment.</p></div>
-                  <div><h4>Hours</h4><p>Monday to Saturday, 10am to 7pm IST.</p></div>
+                  <div><h4>Where</h4><p>Online store, shipping across India.</p></div>
+                  <div><h4>Hours</h4><p>Monday to Saturday, 10am to 8pm IST.</p></div>
                 </div>
                 <div style={{ marginTop: "1.6rem", display: "flex", gap: ".6rem", flexWrap: "wrap" }}>
-                  <a className={`${styles.btn} ${styles.btnPrimary}`} href={wa("Hello Rangat!")} target="_blank" rel="noopener noreferrer"><IconWhatsApp /> Message us</a>
+                  <a className={`${styles.btn} ${styles.btnPrimary}`} href={wa("Hello Impact Store!")} target="_blank" rel="noopener noreferrer"><IconWhatsApp /> Message us</a>
                   <a className={`${styles.btn} ${styles.btnSoft}`} href={INSTAGRAM} target="_blank" rel="noopener noreferrer">Instagram</a>
                 </div>
               </>

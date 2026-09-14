@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, DM_Sans, Figtree, Fraunces } from "next/font/google";
+import { Archivo, Bricolage_Grotesque, DM_Sans, Figtree } from "next/font/google";
 import "./globals.css";
 
 // Self-hosted via next/font — no requests sent to Google at runtime (privacy-safe)
@@ -17,11 +17,12 @@ const figtree = Figtree({
   display: "swap",
 });
 
-const fraunces = Fraunces({
+// Impact Store (/sample) display font — bold grotesque for the athletic look
+const archivo = Archivo({
   subsets: ["latin"],
-  weight: ["500", "600"],
+  weight: ["500", "600", "700", "800", "900"],
   style: ["normal", "italic"],
-  variable: "--font-fraunces",
+  variable: "--font-archivo",
   display: "swap",
 });
 
@@ -127,7 +128,7 @@ export default function RootLayout({
   return (
     <html
       lang="en-IN"
-      className={`${bricolage.variable} ${figtree.variable} ${fraunces.variable} ${dmSans.variable}`}
+      className={`${bricolage.variable} ${figtree.variable} ${archivo.variable} ${dmSans.variable}`}
     >
       <head>
         <script
