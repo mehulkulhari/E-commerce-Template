@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
           // Control referrer information
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           // Disable browser features not used by this site
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(self)" },
           // Basic XSS protection for older browsers
           { key: "X-XSS-Protection", value: "1; mode=block" },
           // HSTS — enforce HTTPS (only active once on a real HTTPS domain)

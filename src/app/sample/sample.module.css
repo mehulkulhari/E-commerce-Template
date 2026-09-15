@@ -653,3 +653,88 @@
 
 /* On phones the modal scrolls, so pin its close button to the screen */
 @media (max-width: 699px) { .closeBtn { position: fixed; top: 22px; right: 22px; box-shadow: 0 4px 14px -6px rgba(34,36,44,.35); } }
+
+/* ── Shopping bag drawer + checkout ─────────────────────────────── */
+.cartOverlay {
+  position: fixed; inset: 0; z-index: 120; display: flex; justify-content: flex-end;
+  background: rgba(20,20,20,.42); backdrop-filter: blur(3px); animation: fade .2s var(--ease);
+}
+.cartPanel {
+  width: min(440px, 100%); height: 100%; background: var(--paper); color: var(--ink);
+  display: flex; flex-direction: column; box-shadow: -20px 0 60px -30px rgba(0,0,0,.5);
+  animation: slideIn .32s var(--ease);
+}
+@keyframes slideIn { from { transform: translateX(24px); opacity: .6; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .cartOverlay, .cartPanel { animation: none; } }
+.cartHead {
+  display: flex; align-items: center; gap: .6rem; padding: 1.1rem 1.2rem;
+  border-bottom: 1px solid var(--line);
+}
+.cartTitle { flex: 1; font-family: var(--serif); font-weight: 700; font-size: 1.1rem; letter-spacing: .01em; }
+.cartIcon {
+  width: 38px; height: 38px; display: grid; place-items: center; flex: none;
+  background: none; border: none; cursor: pointer; color: var(--ink); border-radius: 50%;
+}
+.cartIcon:hover { background: var(--oat); }
+.cartIcon svg { width: 20px; height: 20px; }
+.cartBody { flex: 1; overflow-y: auto; padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 1rem; }
+.cartFreeNote { font-size: .78rem; letter-spacing: .04em; color: var(--brass); background: var(--oat); padding: .6rem .8rem; text-align: center; }
+
+.cartLine { display: grid; grid-template-columns: 72px 1fr auto; gap: .9rem; align-items: start; }
+.cartThumb { position: relative; width: 72px; aspect-ratio: 1/1; overflow: hidden; background: var(--oat); }
+.cartLineInfo { display: flex; flex-direction: column; gap: .3rem; min-width: 0; }
+.cartLineName { font-size: .86rem; font-weight: 500; line-height: 1.35; }
+.cartLineMeta { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.cartQty { display: flex; align-items: center; gap: .5rem; margin-top: .2rem; font-size: .85rem; }
+.qtyBtn {
+  width: 26px; height: 26px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+  cursor: pointer; font-size: 1rem; line-height: 1; display: grid; place-items: center;
+}
+.qtyBtn:hover { border-color: var(--ink); }
+.cartRemove { margin-left: .4rem; background: none; border: none; cursor: pointer; font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; padding: 0; }
+.cartRemove:hover { color: var(--brass); }
+.cartLinePrice { font-size: .88rem; font-weight: 500; white-space: nowrap; }
+
+.cartFoot { border-top: 1px solid var(--line); padding: 1.1rem 1.2rem 1.3rem; display: flex; flex-direction: column; gap: .55rem; }
+.cartRow { display: flex; justify-content: space-between; font-size: .88rem; color: var(--muted); }
+.cartTotal { color: var(--ink); font-weight: 700; font-size: 1rem; padding-top: .4rem; border-top: 1px solid var(--line-soft); margin-top: .2rem; }
+.cartFoot .btn { width: 100%; margin-top: .5rem; }
+.cartFinePrint { font-size: .7rem; color: var(--muted); text-align: center; line-height: 1.5; }
+.cartWaLink { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; font-size: .74rem; letter-spacing: .06em; color: var(--wa); margin-top: .2rem; }
+.cartWaLink svg { width: 15px; height: 15px; }
+.cartError { font-size: .8rem; color: #C0261C; background: #FBEAE8; border: 1px solid #F1C9C4; padding: .6rem .8rem; }
+
+.cartEmpty, .cartDone { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 2rem; text-align: center; }
+.cartEmpty svg { width: 34px; height: 34px; color: var(--muted); }
+.cartEmpty p { color: var(--muted); }
+.cartDone h3 { font-family: var(--serif); font-weight: 700; font-size: 1.4rem; }
+.cartDone p { color: var(--muted); max-width: 32ch; }
+.cartDone .btn { margin-top: .4rem; }
+.doneMark { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--wa); color: #fff; }
+.doneMark svg { width: 28px; height: 28px; }
+
+/* Checkout form */
+.field { display: flex; flex-direction: column; gap: .35rem; }
+.field label { font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.field input, .field textarea {
+  border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+  padding: .7rem .8rem; font-family: var(--sans); font-size: .92rem; border-radius: 0; width: 100%; resize: vertical;
+}
+.field input:focus-visible, .field textarea:focus-visible { outline: none; border-color: var(--ink); }
+.fieldRow { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+
+.payOptions { display: flex; flex-direction: column; gap: .6rem; }
+.payOpt {
+  display: flex; align-items: center; gap: .8rem; text-align: left; cursor: pointer;
+  border: 1px solid var(--line); background: var(--paper); color: var(--ink); padding: .85rem .9rem;
+}
+.payOpt:hover { border-color: var(--ink); }
+.payOptOn { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.payOpt b { display: block; font-size: .9rem; font-weight: 600; }
+.payOpt small { display: block; font-size: .74rem; color: var(--muted); margin-top: .1rem; }
+.payRadio { flex: none; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--line); position: relative; }
+.payOptOn .payRadio { border-color: var(--ink); }
+.payOptOn .payRadio::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--brass); }
+
+/* Header / dock bag count badge reuses .count (see header) */
+.cartCount { position: absolute; top: 4px; right: 2px; min-width: 16px; height: 16px; background: var(--brass); color: #fff; border-radius: 999px; font-size: .58rem; font-weight: 700; display: grid; place-items: center; padding: 0 4px; font-family: var(--sans); letter-spacing: 0; }

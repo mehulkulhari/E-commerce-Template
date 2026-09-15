@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { Catalog, CatalogImage } from "@/lib/catalog";
+import { useCart } from "@/lib/cart";
+import Cart from "./Cart";
 import styles from "./sample.module.css";
 
 /* ── SWAP for a real client ───────────────────────────────────────
@@ -195,6 +197,8 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
   const [quick, setQuick] = useState<Item | null>(null);
   const [shot, setShot] = useState(0);
   const [size, setSize] = useState<string | null>(null);
+  const [sizeHint, setSizeHint] = useState(false);
+  const bag = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [info, setInfo] = useState<"shipping" | "contact" | null>(null);
@@ -272,7 +276,12 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
     setMenuOpen(false);
     requestAnimationFrame(() => document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" }));
   };
-  const openQuick = (i: Item) => { setSize(null); setShot(0); setQuick(i); };
+  const openQuick = (i: Item) => { setSize(null); setSizeHint(false); setShot(0); setQuick(i); };
+  const addToBag = (i: Item) => {
+    if (i.sizes.length > 0 && !size) { setSizeHint(true); return; }
+    bag.add(i.id, size ?? "One size", 1);
+    setQuick(null); // add() opens the bag drawer
+  };
 
   const visible = useMemo(() => {
     let base = items;
@@ -321,9 +330,6 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
 
   const navItems = [{ key: "all", label: "Shop All" }, ...categories.slice(0, 3).map((c) => ({ key: `c:${c}`, label: c }))];
   const chips = [{ key: "all", label: "All" }, ...categories.map((c) => ({ key: `c:${c}`, label: c }))];
-
-  const orderMsg = (p: Item) =>
-    `Hello Impact Store, I would like to order the ${p.name}${p.code ? ` (code #${p.code})` : ""}${size ? `, size ${size}` : ""}, priced at ${inr(p.price)}. Is it available?`;
 
   const heroCopy = (
     <>
@@ -379,10 +385,11 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
                 <IconHeart />
                 {saved.length > 0 && <span className={styles.count}>{saved.length}</span>}
               </button>
-              <a className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm} ${styles.navWa}`}
-                href={wa("Hello Impact Store, I would like to know more about your collection.")} target="_blank" rel="noopener noreferrer">
-                Order on WhatsApp
-              </a>
+              <button className={styles.iconBtn} onClick={bag.openCart}
+                aria-label={`Bag, ${bag.count} item${bag.count === 1 ? "" : "s"}`}>
+                <IconBag />
+                {bag.count > 0 && <span className={styles.cartCount}>{bag.count}</span>}
+              </button>
             </div>
           </div>
         </div>
@@ -729,7 +736,10 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
       <nav className={styles.dock} aria-label="Quick navigation">
         <a href="#top" className={styles.dockOn} aria-label="Top"><IconHome /></a>
         <a href={edits.length >= 2 ? "#collections" : "#shop"} aria-label="Collections"><IconGrid /></a>
-        <button onClick={() => goShop("all")} aria-label="Shop all"><IconBag /></button>
+        <button onClick={bag.openCart} aria-label={`Bag, ${bag.count} item${bag.count === 1 ? "" : "s"}`}>
+          <IconBag />
+          {bag.count > 0 && <span className={styles.cartCount}>{bag.count}</span>}
+        </button>
         <button onClick={() => goShop("saved")} aria-label={`Saved, ${saved.length} items`}>
           <IconHeart />
           {saved.length > 0 && <span className={styles.count}>{saved.length}</span>}
@@ -789,9 +799,9 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
 
               <div className={styles.modalActions}>
                 {quick.inStock ? (
-                  <a className={`${styles.btn} ${styles.btnPrimary}`} href={wa(orderMsg(quick))} target="_blank" rel="noopener noreferrer">
-                    <IconWhatsApp /> Order on WhatsApp
-                  </a>
+                  <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => addToBag(quick)}>
+                    <IconBag /> Add to bag
+                  </button>
                 ) : (
                   <a className={`${styles.btn} ${styles.btnLine}`} target="_blank" rel="noopener noreferrer"
                     href={wa(`Hello Impact Store, will the ${quick.name}${quick.code ? ` (code #${quick.code})` : ""} be back in stock?`)}>
@@ -802,6 +812,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
                   {saved.includes(quick.id) ? "Saved" : "Save"}
                 </button>
               </div>
+              {quick.inStock && sizeHint && !size && <p className={styles.cartError}>Please choose a size first.</p>}
               <p className={styles.modalNote}><IconInfo /> Dispatched in 2 to 3 working days.</p>
             </div>
           </div>
@@ -872,6 +883,9 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
           </div>
         </div>
       )}
+
+      {/* ── Shopping bag + checkout ── */}
+      <Cart items={items} config={{ brand: "Impact Store", phone: PHONE, wa }} />
     </div>
   );
 }
