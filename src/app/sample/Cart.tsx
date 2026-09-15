@@ -8,14 +8,12 @@ import styles from "./sample.module.css";
 /* Minimal product shape the cart needs (Storefront's Item satisfies it). */
 export type ShopItem = {
   id: string; name: string; price: number; code?: number; category: string;
-  images: { src: string; blur: string }[];
+  images: { src: string; blur?: string }[];
 };
 
-type Config = { brand: string; phone: string; wa: (msg: string) => string };
+type Config = { brand: string; phone: string; wa: (msg: string) => string; upiVpa: string | null; upiName: string | null };
 
 const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
-const UPI_VPA = process.env.NEXT_PUBLIC_UPI_VPA;
-const UPI_NAME = process.env.NEXT_PUBLIC_UPI_NAME;
 const RZP_KEY = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 
 const S = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
@@ -54,13 +52,14 @@ const digits = (s: string) => s.replace(/\D/g, "");
 
 export default function Cart({ items, config }: { items: ShopItem[]; config: Config }) {
   const { open, lines, closeCart, setQty, remove, clear } = useCart();
+  const { upiVpa, upiName } = config;
   const byId = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
   const priceOf = (id: string) => byId.get(id)?.price;
   const { subtotal, shipping, total } = totals(lines, priceOf);
 
   const methods: Method[] = [
     ...(RZP_KEY ? (["online"] as Method[]) : []),
-    ...(UPI_VPA ? (["upi"] as Method[]) : []),
+    ...(upiVpa ? (["upi"] as Method[]) : []),
     "cod",
   ];
   const [step, setStep] = useState<"bag" | "checkout" | "done">("bag");
@@ -122,6 +121,15 @@ export default function Cart({ items, config }: { items: ShopItem[]; config: Con
     window.open(config.wa(orderText(pay, paidNote)), "_blank", "noopener,noreferrer");
   };
 
+  // Save the order to the database (best-effort — the WhatsApp message always
+  // carries the order, so a save failure never loses it). No-op until the
+  // Supabase service role key is configured on the server.
+  const persistOrder = (m: Method, extra: { paymentId?: string; paymentStatus?: string } = {}) =>
+    fetch("/api/orders", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lines, customer: form, method: m, ...extra }),
+    }).catch(() => null);
+
   function validate(): string | null {
     if (!form.name.trim()) return "Please enter your name.";
     if (digits(form.phone).length < 10) return "Please enter a valid 10-digit phone number.";
@@ -136,13 +144,15 @@ export default function Cart({ items, config }: { items: ShopItem[]; config: Con
     setError(null);
 
     if (method === "cod") {
+      await persistOrder("cod");
       sendWhatsApp("Cash on delivery");
       finish("Order placed", "We’ve opened WhatsApp with your order. Send it to confirm, and we’ll be in touch about delivery.");
       return;
     }
     if (method === "upi") {
+      await persistOrder("upi");
       const note = `Order for ${config.brand}`;
-      const link = `upi://pay?pa=${encodeURIComponent(UPI_VPA!)}&pn=${encodeURIComponent(UPI_NAME || config.brand)}&am=${total}&cu=INR&tn=${encodeURIComponent(note)}`;
+      const link = `upi://pay?pa=${encodeURIComponent(upiVpa!)}&pn=${encodeURIComponent(upiName || config.brand)}&am=${total}&cu=INR&tn=${encodeURIComponent(note)}`;
       window.location.assign(link); // opens the customer's UPI app
       setTimeout(() => sendWhatsApp("UPI", "I’m paying now by UPI and will send the payment screenshot."), 600);
       finish("Finish paying in your UPI app", "Approve the payment, then send us the screenshot on WhatsApp so we can confirm and dispatch.");
@@ -173,6 +183,7 @@ export default function Cart({ items, config }: { items: ShopItem[]; config: Con
             });
             const { ok: verified } = (await vr.json()) as { ok: boolean };
             if (!verified) { setBusy(false); setError("We couldn’t verify that payment. If you were charged, message us on WhatsApp."); return; }
+            await persistOrder("online", { paymentId: r.razorpay_payment_id, paymentStatus: "paid" });
             sendWhatsApp("Paid online", `Payment ID: ${r.razorpay_payment_id}`);
             finish("Payment received", "Thank you — your order is confirmed. We’ve shared the details with the store and will dispatch shortly.");
           } catch {
@@ -198,7 +209,7 @@ export default function Cart({ items, config }: { items: ShopItem[]; config: Con
 
   const methodLabel: Record<Method, { title: string; sub: string }> = {
     online: { title: "Pay online", sub: "UPI, credit / debit card, netbanking" },
-    upi: { title: "Pay by UPI", sub: `To ${UPI_VPA ?? ""} — approve in your UPI app` },
+    upi: { title: "Pay by UPI", sub: `To ${upiVpa ?? ""} — approve in your UPI app` },
     cod: { title: "Cash on delivery", sub: "Pay when your order arrives" },
   };
 
@@ -237,7 +248,7 @@ export default function Cart({ items, config }: { items: ShopItem[]; config: Con
                 <div className={styles.cartLine} key={`${line.id}-${line.size}`}>
                   <div className={styles.cartThumb}>
                     {item.images[0]
-                      ? <Image src={item.images[0].src} alt={item.name} fill sizes="72px" placeholder="blur" blurDataURL={item.images[0].blur} className={styles.photo} />
+                      ? <Image src={item.images[0].src} alt={item.name} fill sizes="72px" placeholder={item.images[0].blur ? "blur" : "empty"} blurDataURL={item.images[0].blur} className={styles.photo} />
                       : null}
                   </div>
                   <div className={styles.cartLineInfo}>

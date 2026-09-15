@@ -3,21 +3,19 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { Catalog, CatalogImage } from "@/lib/catalog";
+import type { StoreSettings } from "@/lib/store-data";
 import { useCart } from "@/lib/cart";
 import Cart from "./Cart";
 import styles from "./sample.module.css";
 
 /* ── SWAP for a real client ───────────────────────────────────────
-   PHONE / INSTAGRAM : the client's WhatsApp number and profile
+   PHONE / instagram : the client's WhatsApp number and profile
    IS_DEMO_BRAND     : set to false once the brand on the page is theirs
    Products & photos : don't edit them here. Put them in catalog/ and run
                        `npm run catalog`. See catalog/README.md.
    ─────────────────────────────────────────────────────────────── */
-const PHONE = "910000000000";
-const INSTAGRAM = "https://www.instagram.com/impact.store/";
 const IS_DEMO_BRAND = false;
 const STORE_KEY = "impact:saved";
-const wa = (msg: string) => `https://wa.me/${PHONE}?text=${encodeURIComponent(msg)}`;
 
 /* Saved pieces live in localStorage, read through useSyncExternalStore so the
    server render and first client render agree and other open tabs stay in sync. */
@@ -107,13 +105,6 @@ const SIZE_CHART = [
   { size: "XL", chest: 42, waist: 36 },
   { size: "XXL", chest: 44, waist: 38 },
 ];
-const ANNOUNCE = [
-  "Free shipping across India above ₹1,999",
-  "New drops every week",
-  "Easy 7-day returns",
-  "100% authentic",
-];
-
 const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 const pieces = (n: number) => `${n} ${n === 1 ? "piece" : "pieces"}`;
 const short = (s: string, n = 16) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s);
@@ -164,7 +155,7 @@ function Media({ img, tone, motif, alt = "", sizes, preload }: {
   return (
     <Image
       src={img.src} alt={alt} fill sizes={sizes} preload={preload}
-      placeholder="blur" blurDataURL={img.blur}
+      placeholder={img.blur ? "blur" : "empty"} blurDataURL={img.blur}
       className={`${styles.ph} ${styles.photo}`}
     />
   );
@@ -172,7 +163,9 @@ function Media({ img, tone, motif, alt = "", sizes, preload }: {
 
 type Look = { key: string; title: string; sub: string; img?: CatalogImage; tone: string; motif?: string; href?: string; shop?: string; item?: Item };
 
-export default function Storefront({ catalog }: { catalog: Catalog }) {
+export default function Storefront({ catalog, settings }: { catalog: Catalog; settings: StoreSettings }) {
+  const { brand, whatsappPhone, instagram, upiVpa, upiName, announcements } = settings;
+  const wa = useCallback((msg: string) => `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(msg)}`, [whatsappPhone]);
   const live = catalog.products.length > 0;
   const items = useMemo<Item[]>(() => (live ? fromCatalog(catalog) : DEMO_ITEMS), [live, catalog]);
   const categories = useMemo(() => {
@@ -322,7 +315,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
     return items.length >= 3
       ? items.slice(0, 3).map((i) => ({ key: i.id, title: i.name, sub: i.category || inr(i.price), img: i.images[1] ?? i.images[0], tone: i.tone, item: i }))
       : [];
-  }, [catalog.site.looks, live, edits, items]);
+  }, [catalog.site.looks, live, edits, items, wa]);
 
   const igTiles = live
     ? items.slice(0, 6).map((i) => ({ key: i.id, img: i.images[1] ?? i.images[0], tone: i.tone, motif: undefined as string | undefined }))
@@ -352,8 +345,8 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
 
       <div className={styles.announce} aria-label="Store announcements">
         <div className={styles.announceTrack}>
-          {[...ANNOUNCE, ...ANNOUNCE].map((t, i) => (
-            <span key={i} aria-hidden={i >= ANNOUNCE.length}>{t}</span>
+          {[...announcements, ...announcements].map((t, i) => (
+            <span key={i} aria-hidden={i >= announcements.length}>{t}</span>
           ))}
         </div>
       </div>
@@ -376,7 +369,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
               <a className={styles.navLink} href="#story">Our Story</a>
             </nav>
             <a className={styles.brand} href="#top" aria-label="Impact Store, home">
-              <span className={styles.brandMark}>IMPACT STORE</span>
+              <span className={styles.brandMark}>{brand}</span>
               <span className={styles.brandSub}>Sport · Street</span>
             </a>
             <div className={styles.navUtils}>
@@ -399,7 +392,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
       {menuOpen && (
         <div className={styles.menuOverlay} role="dialog" aria-modal="true" aria-label="Menu">
           <div className={styles.menuTop}>
-            <span className={styles.brandMark}>IMPACT STORE</span>
+            <span className={styles.brandMark}>{brand}</span>
             <button ref={closeRef} className={styles.iconBtn} onClick={() => setMenuOpen(false)} aria-label="Close menu"><IconClose /></button>
           </div>
           <nav className={styles.menuLinks} aria-label="Mobile">
@@ -414,7 +407,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
             <a className={`${styles.btn} ${styles.btnPrimary}`} href={wa("Hello Impact Store, I would like to know more about your collection.")} target="_blank" rel="noopener noreferrer">
               <IconWhatsApp /> Order on WhatsApp
             </a>
-            <a className={styles.linkRule} href={INSTAGRAM} target="_blank" rel="noopener noreferrer">Instagram</a>
+            <a className={styles.linkRule} href={instagram} target="_blank" rel="noopener noreferrer">Instagram</a>
           </div>
         </div>
       )}
@@ -652,7 +645,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
             </div>
             <div className={`${styles.igGrid} reveal`}>
               {igTiles.map((t) => (
-                <a key={t.key} className={styles.igTile} href={INSTAGRAM} target="_blank" rel="noopener noreferrer" aria-label="Open our Instagram">
+                <a key={t.key} className={styles.igTile} href={instagram} target="_blank" rel="noopener noreferrer" aria-label="Open our Instagram">
                   <Media img={t.img} tone={t.tone} motif={t.motif} sizes={IG_SIZES} />
                   <span className={styles.igMark}><IconInstagram /></span>
                 </a>
@@ -692,7 +685,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
         <div className={styles.wrap}>
           <div className={styles.footTop}>
             <div>
-              <span className={styles.brandMark}>IMPACT STORE</span>
+              <span className={styles.brandMark}>{brand}</span>
               <p className={styles.footBrandBlurb}>Authentic sportswear and streetwear. Shipped across India.</p>
               <div className={styles.payRow}><span>UPI</span><span>Cards</span><span>Net banking</span><span>COD</span></div>
             </div>
@@ -718,7 +711,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
               <h4>About</h4>
               <ul>
                 <li><a href="#story">Our story</a></li>
-                <li><a href={INSTAGRAM} target="_blank" rel="noopener noreferrer">Instagram</a></li>
+                <li><a href={instagram} target="_blank" rel="noopener noreferrer">Instagram</a></li>
                 <li><a href="/legal/privacy-policy">Privacy policy</a></li>
                 <li><a href="/legal/terms">Terms of service</a></li>
                 <li><a href="/legal/refund">Refund policy</a></li>
@@ -876,7 +869,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
                 </div>
                 <div style={{ marginTop: "1.6rem", display: "flex", gap: ".6rem", flexWrap: "wrap" }}>
                   <a className={`${styles.btn} ${styles.btnPrimary}`} href={wa("Hello Impact Store!")} target="_blank" rel="noopener noreferrer"><IconWhatsApp /> Message us</a>
-                  <a className={`${styles.btn} ${styles.btnSoft}`} href={INSTAGRAM} target="_blank" rel="noopener noreferrer">Instagram</a>
+                  <a className={`${styles.btn} ${styles.btnSoft}`} href={instagram} target="_blank" rel="noopener noreferrer">Instagram</a>
                 </div>
               </>
             )}
@@ -885,7 +878,7 @@ export default function Storefront({ catalog }: { catalog: Catalog }) {
       )}
 
       {/* ── Shopping bag + checkout ── */}
-      <Cart items={items} config={{ brand: "Impact Store", phone: PHONE, wa }} />
+      <Cart items={items} config={{ brand, phone: whatsappPhone, upiVpa, upiName, wa }} />
     </div>
   );
 }

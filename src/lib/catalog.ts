@@ -7,14 +7,15 @@ export type CatalogImage = {
   src: string;
   width: number;
   height: number;
-  /** Tiny base64 WebP shown blurred while the photo loads. */
-  blur: string;
+  /** Tiny base64 WebP shown blurred while the photo loads. Optional
+      (DB-served products don't carry one; the image just loads without it). */
+  blur?: string;
 };
 
 export type CatalogProduct = {
   id: string;
-  /** The photo number, e.g. 7 for 7.jpg. Doubles as the product code customers quote. */
-  code: number;
+  /** The product code customers quote. Optional for DB-served products. */
+  code?: number;
   slug: string;
   name: string;
   price: number;
