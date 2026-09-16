@@ -124,7 +124,7 @@ export default function Cart({ items, config }: { items: ShopItem[]; config: Con
   // Save the order to the database (best-effort — the WhatsApp message always
   // carries the order, so a save failure never loses it). No-op until the
   // Supabase service role key is configured on the server.
-  const persistOrder = (m: Method, extra: { paymentId?: string; paymentStatus?: string } = {}) =>
+  const persistOrder = (m: Method, extra: { payment?: RzpResponse } = {}) =>
     fetch("/api/orders", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ lines, customer: form, method: m, ...extra }),
@@ -183,7 +183,7 @@ export default function Cart({ items, config }: { items: ShopItem[]; config: Con
             });
             const { ok: verified } = (await vr.json()) as { ok: boolean };
             if (!verified) { setBusy(false); setError("We couldn’t verify that payment. If you were charged, message us on WhatsApp."); return; }
-            await persistOrder("online", { paymentId: r.razorpay_payment_id, paymentStatus: "paid" });
+            await persistOrder("online", { payment: r });
             sendWhatsApp("Paid online", `Payment ID: ${r.razorpay_payment_id}`);
             finish("Payment received", "Thank you — your order is confirmed. We’ve shared the details with the store and will dispatch shortly.");
           } catch {

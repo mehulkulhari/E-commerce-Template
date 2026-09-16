@@ -1,21 +1,36 @@
 import { NextResponse } from "next/server";
+import crypto from "node:crypto";
 import { supabaseAdmin } from "@/lib/supabase";
 import { parseLines, totals } from "@/lib/cart-core";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+type Payment = { razorpay_order_id?: string; razorpay_payment_id?: string; razorpay_signature?: string };
 type Body = {
   lines?: unknown;
   customer?: { name?: string; phone?: string; pincode?: string; address?: string };
   method?: string;
-  paymentId?: string;
-  paymentStatus?: string;
+  payment?: Payment;
 };
 type ProductRow = { id: string; name: string; code: number | null; price: number };
 
-/** Saves a customer order. Prices are recomputed from the database here — the
-    amount and item details are never trusted from the client. */
+const MAX_LINES = 50;
+const clip = (s: unknown, max: number) => String(s ?? "").trim().slice(0, max);
+
+/** Verify a Razorpay payment came from the gateway (HMAC of order|payment). */
+function verifyPayment(p: Payment | undefined): boolean {
+  const secret = process.env.RAZORPAY_KEY_SECRET;
+  if (!secret || !p?.razorpay_order_id || !p?.razorpay_payment_id || !p?.razorpay_signature) return false;
+  const expected = crypto.createHmac("sha256", secret).update(`${p.razorpay_order_id}|${p.razorpay_payment_id}`).digest("hex");
+  const a = Buffer.from(expected);
+  const b = Buffer.from(String(p.razorpay_signature));
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+/** Saves a customer order. Prices are recomputed from the database here, and a
+    "paid" status is only recorded after the payment signature is verified —
+    neither the amount nor the paid flag is ever trusted from the client. */
 export async function POST(req: Request) {
   const sb = supabaseAdmin();
   if (!sb) return NextResponse.json({ ok: false, error: "not_configured" }, { status: 503 });
@@ -24,16 +39,31 @@ export async function POST(req: Request) {
   try { body = await req.json(); } catch { return NextResponse.json({ ok: false, error: "bad_request" }, { status: 400 }); }
 
   const lines = parseLines(JSON.stringify(body.lines ?? []));
+  if (lines.length === 0 || lines.length > MAX_LINES) {
+    return NextResponse.json({ ok: false, error: "invalid_cart" }, { status: 400 });
+  }
+
   const c = body.customer ?? {};
-  const name = String(c.name ?? "").trim();
-  const phone = String(c.phone ?? "").replace(/\D/g, "");
-  const address = String(c.address ?? "").trim();
-  const pincode = String(c.pincode ?? "").replace(/\D/g, "");
+  const name = clip(c.name, 80);
+  const phone = clip(c.phone, 20).replace(/\D/g, "");
+  const address = clip(c.address, 600);
+  const pincode = clip(c.pincode, 10).replace(/\D/g, "");
   const method = ["cod", "upi", "online"].includes(String(body.method)) ? String(body.method) : "cod";
 
-  if (lines.length === 0) return NextResponse.json({ ok: false, error: "empty_cart" }, { status: 400 });
-  if (!name || phone.length < 10 || address.length < 6) {
-    return NextResponse.json({ ok: false, error: "invalid_details" }, { status: 400 });
+  if (name.length < 2 || name.length > 80) return NextResponse.json({ ok: false, error: "invalid_name" }, { status: 400 });
+  if (phone.length < 10 || phone.length > 15) return NextResponse.json({ ok: false, error: "invalid_phone" }, { status: 400 });
+  if (pincode.length !== 6) return NextResponse.json({ ok: false, error: "invalid_pincode" }, { status: 400 });
+  if (address.length < 6 || address.length > 600) return NextResponse.json({ ok: false, error: "invalid_address" }, { status: 400 });
+
+  // Server-side authority: prices from the DB, paid status only if verified.
+  let payment_status = method === "cod" ? "cod" : "pending";
+  let payment_id: string | null = null;
+  if (method === "online") {
+    if (!verifyPayment(body.payment)) {
+      return NextResponse.json({ ok: false, error: "payment_unverified" }, { status: 400 });
+    }
+    payment_status = "paid";
+    payment_id = body.payment!.razorpay_payment_id!;
   }
 
   const ids = [...new Set(lines.map((l) => l.id))];
@@ -43,18 +73,17 @@ export async function POST(req: Request) {
 
   const items = lines
     .filter((l) => map.has(l.id))
-    .map((l) => { const p = map.get(l.id)!; return { product_id: l.id, name: p.name, code: p.code, size: l.size, qty: l.qty, price: p.price }; });
-  if (items.length === 0) return NextResponse.json({ ok: false, error: "empty_cart" }, { status: 400 });
+    .map((l) => { const p = map.get(l.id)!; return { product_id: l.id, name: p.name, code: p.code, size: clip(l.size, 24), qty: l.qty, price: p.price }; });
+  if (items.length === 0) return NextResponse.json({ ok: false, error: "invalid_cart" }, { status: 400 });
 
   const { subtotal, shipping, total } = totals(lines, (id) => map.get(id)?.price);
-  const payment_status = body.paymentStatus === "paid" ? "paid" : method === "cod" ? "cod" : "pending";
 
   const { data: order, error: insErr } = await sb
     .from("orders")
     .insert({
-      customer_name: name, customer_phone: phone, address, pincode: pincode || null,
+      customer_name: name, customer_phone: phone, address, pincode,
       items, subtotal, shipping, discount: 0, total,
-      payment_method: method, payment_status, payment_id: body.paymentId ?? null, status: "new",
+      payment_method: method, payment_status, payment_id, status: "new",
     })
     .select("order_no")
     .single();
