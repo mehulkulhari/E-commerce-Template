@@ -87,6 +87,8 @@ export async function POST(req: Request) {
     })
     .select("order_no")
     .single();
+  // 23505 = unique violation on payment_id: this payment was already recorded.
+  if (insErr?.code === "23505") return NextResponse.json({ ok: false, error: "already_recorded" }, { status: 409 });
   if (insErr || !order) return NextResponse.json({ ok: false, error: "save_failed" }, { status: 500 });
 
   return NextResponse.json({ ok: true, orderNo: order.order_no });

@@ -2,9 +2,23 @@ import type { NextConfig } from "next";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://dmtostore.in";
 
+// Supabase Storage host (for product photos the owner uploads in /admin).
+// Seeded photos are static files under /public/catalog; owner uploads live in
+// the Supabase `product-images` bucket and are served from this host.
+const supabaseHost = (() => {
+  try { return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").hostname || null; }
+  catch { return null; }
+})();
+
 const nextConfig: NextConfig = {
   // Disable source maps in production — don't expose source code to browser
   productionBrowserSourceMaps: false,
+
+  images: {
+    remotePatterns: supabaseHost
+      ? [{ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/**" }]
+      : [],
+  },
 
   // Dev only: lets a phone on the same Wi-Fi load the dev server by this PC's
   // LAN address. Update if the router assigns the PC a different IP.
