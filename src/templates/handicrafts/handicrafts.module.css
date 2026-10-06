@@ -67,7 +67,7 @@
 
 /* ── Hero ── */
 .hero { position: relative; min-height: clamp(380px, 68vh, 640px); display: grid; place-items: center; overflow: hidden; }
-.heroScrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(40,25,15,.18), rgba(40,25,15,.5)); }
+.heroScrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(40,25,15,.34), rgba(40,25,15,.58)); }
 .heroBody { position: relative; text-align: center; color: #fff; padding: 2rem 1rem; max-width: 760px; }
 .heroBody h1 { font-family: var(--display); font-weight: 600; font-size: clamp(2.2rem, 6vw, 4rem); line-height: 1.05; text-wrap: balance; }
 .heroBody p { margin-top: .8rem; font-size: 1rem; opacity: .92; }
