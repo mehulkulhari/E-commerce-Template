@@ -738,3 +738,12 @@
 
 /* Header / dock bag count badge reuses .count (see header) */
 .cartCount { position: absolute; top: 4px; right: 2px; min-width: 16px; height: 16px; background: var(--brass); color: #fff; border-radius: 999px; font-size: .58rem; font-weight: 700; display: grid; place-items: center; padding: 0 4px; font-family: var(--sans); letter-spacing: 0; }
+
+/* "On model" marker for photos of the piece being worn. */
+.onModel {
+  position: absolute; left: .6rem; bottom: .6rem; z-index: 3;
+  padding: .22rem .55rem; border-radius: 4px;
+  background: rgba(255, 255, 255, .94); color: #111;
+  font-size: .68rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  pointer-events: none;
+}

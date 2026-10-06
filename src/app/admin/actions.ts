@@ -12,7 +12,7 @@ import { supabaseServer } from "@/lib/supabase-server";
 
 export type ActionResult = { ok: boolean; error?: string };
 
-export type ProductImage = { src: string; width: number; height: number; blur?: string };
+export type ProductImage = { src: string; width: number; height: number; blur?: string; model?: boolean };
 export type ProductInput = {
   id?: string;
   name: string;
@@ -50,6 +50,7 @@ function cleanImages(images: ProductImage[]): ProductImage[] {
       width: Math.max(1, Math.round(Number(im.width) || 1000)),
       height: Math.max(1, Math.round(Number(im.height) || 1000)),
       ...(typeof im.blur === "string" && im.blur.startsWith("data:") ? { blur: im.blur } : {}),
+      ...(im.model === true ? { model: true } : {}),
     }));
 }
 

@@ -58,3 +58,12 @@ next-env.d.ts
 # The site ships the optimised copies in public/catalog/ and src/data/catalog.json.
 /catalog/photos/*
 !/catalog/photos/.gitkeep
+
+# prospect pipeline: scraped data and outreach lists stay local (repo is public)
+/prospects/
+
+# model shots: photos stay local; only the README and folder skeleton are tracked
+/model-shots/**/*
+!/model-shots/README.md
+!/model-shots/*/
+!/model-shots/*/.gitkeep

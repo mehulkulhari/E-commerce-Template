@@ -8,7 +8,8 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/_next/"],
+        // Prospect previews and the owner panel are private (also noindex).
+        disallow: ["/api/", "/_next/", "/admin/", "/demo/"],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,

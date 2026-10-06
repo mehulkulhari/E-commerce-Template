@@ -9,7 +9,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "prospects": "node scripts/prospects.mjs",
+    "model-shots": "node scripts/import-model-shots.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
+import { AGENCY } from "@/lib/agency";
 import styles from "./page.module.css";
 
-// ── EDIT: your WhatsApp number, country code first, digits only ──
-const PHONE = "910000000000";
+// Your WhatsApp: set NEXT_PUBLIC_AGENCY_WHATSAPP (see .env.example)
+const PHONE = AGENCY.whatsapp;
 // ── EDIT: your live sample store URL ──
 const SAMPLE_URL = "/sample";
 

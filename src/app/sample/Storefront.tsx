@@ -4,9 +4,42 @@ import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { Catalog, CatalogImage } from "@/lib/catalog";
 import type { StoreSettings } from "@/lib/store-data";
+import { instagramUrl, type StoreSpec } from "@/lib/store-spec";
 import { useCart } from "@/lib/cart";
+import DemoBanner from "@/templates/DemoBanner";
 import Cart from "./Cart";
 import styles from "./sample.module.css";
+
+/* Words on the page that belong to one shop. Impact Store's are the default;
+   prospect previews pass copy written for an apparel boutique. */
+export type ApparelCopy = {
+  brandSub: string;
+  heroKicker: string;
+  heroTitle: React.ReactNode;
+  heroSub: string;
+  trust: string[];
+  storyTitle: string;
+  story: string[];
+  quote?: string;
+  igNote: string;
+  footBlurb: string;
+};
+
+export const IMPACT_COPY: ApparelCopy = {
+  brandSub: "Sport · Street",
+  heroKicker: "New season, 2026",
+  heroTitle: <>Wear the <em>impact.</em></>,
+  heroSub: "Jerseys, sneakers, tees and denim from the brands you actually want. Browse the drop, then order on WhatsApp in two taps.",
+  trust: ["Shipping above ₹1,999", "7-day exchange", "Cash on delivery", "100% authentic"],
+  storyTitle: "Only the gear worth wearing.",
+  story: [
+    "Impact Store started as a way to get authentic sportswear and streetwear to people who care how they look, without the markup and the endless wait. Jerseys, sneakers, tees, shirts and denim from the brands you actually want.",
+    "Every piece is checked before it ships. If it is not right, we would rather hold it back than send it out.",
+  ],
+  quote: "We stock what we would wear ourselves, and nothing we would not.",
+  igNote: "New drops land on Instagram first. Tag us when your order arrives.",
+  footBlurb: "Authentic sportswear and streetwear. Shipped across India.",
+};
 
 /* ── SWAP for a real client ───────────────────────────────────────
    PHONE / instagram : the client's WhatsApp number and profile
@@ -88,6 +121,10 @@ const DEMO_LOOKS = [
   { title: "Heirloom reds", sub: "Bridal, 03", tone: "tRose" },
 ];
 
+/** Card photos: the product shot up front, the worn (model) shot on hover. */
+const front = (p: Item) => p.images.find((im) => !im.model) ?? p.images[0];
+const back = (p: Item) => p.images.find((im) => im.model) ?? p.images.filter((im) => !im.model)[1];
+
 function fromCatalog(c: Catalog): Item[] {
   return c.products.map((p, i) => ({
     id: p.id, code: p.code, name: p.name, category: p.category ?? "", collection: p.collection,
@@ -106,6 +143,8 @@ const SIZE_CHART = [
   { size: "XXL", chest: 44, waist: 38 },
 ];
 const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+/** Previews of shops that never posted a price carry price 0. */
+const money = (n: number) => (n > 0 ? inr(n) : "Ask for price");
 const pieces = (n: number) => `${n} ${n === 1 ? "piece" : "pieces"}`;
 const short = (s: string, n = 16) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s);
 const unique = (xs: (string | undefined)[]) => {
@@ -163,9 +202,20 @@ function Media({ img, tone, motif, alt = "", sizes, preload }: {
 
 type Look = { key: string; title: string; sub: string; img?: CatalogImage; tone: string; motif?: string; href?: string; shop?: string; item?: Item };
 
-export default function Storefront({ catalog, settings }: { catalog: Catalog; settings: StoreSettings }) {
-  const { brand, whatsappPhone, instagram, upiVpa, upiName, announcements } = settings;
-  const wa = useCallback((msg: string) => `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(msg)}`, [whatsappPhone]);
+export default function Storefront({ catalog, settings, copy = IMPACT_COPY, preview }: {
+  catalog: Catalog; settings: StoreSettings; copy?: ApparelCopy;
+  /** A prospect preview: banner on top, no bag or checkout, and every
+      "message us" goes to the shop's own Instagram instead of WhatsApp. */
+  preview?: StoreSpec;
+}) {
+  const { brand, whatsappPhone, upiVpa, upiName, announcements } = settings;
+  const instagram = preview ? instagramUrl(preview.handle) : settings.instagram;
+  const igLabel = preview?.handle ? `@${preview.handle}` : `@${settings.instagram.replace(/\/+$/, "").split("/").pop() || "instagram"}`;
+  const via = preview ? "Instagram" : "WhatsApp";
+  const wa = useCallback(
+    (msg: string) => (preview ? instagramUrl(preview.handle) : `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(msg)}`),
+    [whatsappPhone, preview],
+  );
   const live = catalog.products.length > 0;
   const items = useMemo<Item[]>(() => (live ? fromCatalog(catalog) : DEMO_ITEMS), [live, catalog]);
   const categories = useMemo(() => {
@@ -300,11 +350,11 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
     if (catalog.site.looks.length >= 3) {
       return catalog.site.looks.slice(0, 3).map((img, n) => ({
         key: img.src, title: `Look ${String(n + 1).padStart(2, "0")}`, sub: "The lookbook", img, tone: TONES[n],
-        href: wa(`Hello Impact Store, I would like to know more about look ${n + 1} from your lookbook.`),
+        href: wa(`Hello ${brand}, I would like to know more about look ${n + 1} from your lookbook.`),
       }));
     }
     if (!live) {
-      return DEMO_LOOKS.map((l) => ({ key: l.title, ...l, href: wa(`Hello Impact Store, I would like to see the ${l.title} looks.`) }));
+      return DEMO_LOOKS.map((l) => ({ key: l.title, ...l, href: wa(`Hello ${brand}, I would like to see the ${l.title} looks.`) }));
     }
     if (edits.length >= 3) {
       return edits.slice(0, 3).map((e) => {
@@ -313,9 +363,9 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
       });
     }
     return items.length >= 3
-      ? items.slice(0, 3).map((i) => ({ key: i.id, title: i.name, sub: i.category || inr(i.price), img: i.images[1] ?? i.images[0], tone: i.tone, item: i }))
+      ? items.slice(0, 3).map((i) => ({ key: i.id, title: i.name, sub: i.category || money(i.price), img: i.images[1] ?? i.images[0], tone: i.tone, item: i }))
       : [];
-  }, [catalog.site.looks, live, edits, items, wa]);
+  }, [catalog.site.looks, live, edits, items, wa, brand]);
 
   const igTiles = live
     ? items.slice(0, 6).map((i) => ({ key: i.id, img: i.images[1] ?? i.images[0], tone: i.tone, motif: undefined as string | undefined }))
@@ -326,12 +376,9 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
 
   const heroCopy = (
     <>
-      <span className={`${styles.label} reveal`}>New season, 2026</span>
-      <h1 className={`${styles.heroTitle} reveal`}>Wear the <em>impact.</em></h1>
-      <p className={`${styles.heroSub} reveal`}>
-        Jerseys, sneakers, tees and denim from the brands you actually want. Browse the drop,
-        then order on WhatsApp in two taps.
-      </p>
+      <span className={`${styles.label} reveal`}>{copy.heroKicker}</span>
+      <h1 className={`${styles.heroTitle} reveal`}>{copy.heroTitle}</h1>
+      <p className={`${styles.heroSub} reveal`}>{copy.heroSub}</p>
       <div className={`${styles.heroActions} reveal`}>
         <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => goShop("all")}>Shop all</button>
         {edits.length >= 2 && <a className={`${styles.btn} ${styles.btnLine}`} href="#collections">Shop by category</a>}
@@ -341,6 +388,7 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
 
   return (
     <div className={styles.boutique}>
+      {preview && <DemoBanner spec={preview} />}
       {IS_DEMO_BRAND && <p className={styles.demoNote}>Demonstration template</p>}
 
       <div className={styles.announce} aria-label="Store announcements">
@@ -368,9 +416,9 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
               ))}
               <a className={styles.navLink} href="#story">Our Story</a>
             </nav>
-            <a className={styles.brand} href="#top" aria-label="Impact Store, home">
+            <a className={styles.brand} href="#top" aria-label={`${brand}, home`}>
               <span className={styles.brandMark}>{brand}</span>
-              <span className={styles.brandSub}>Sport · Street</span>
+              <span className={styles.brandSub}>{copy.brandSub}</span>
             </a>
             <div className={styles.navUtils}>
               <button className={`${styles.iconBtn} ${saved.length ? styles.wishOn : ""}`} onClick={() => goShop("saved")}
@@ -378,11 +426,15 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
                 <IconHeart />
                 {saved.length > 0 && <span className={styles.count}>{saved.length}</span>}
               </button>
-              <button className={styles.iconBtn} onClick={bag.openCart}
-                aria-label={`Bag, ${bag.count} item${bag.count === 1 ? "" : "s"}`}>
-                <IconBag />
-                {bag.count > 0 && <span className={styles.cartCount}>{bag.count}</span>}
-              </button>
+              {preview ? (
+                <a className={styles.iconBtn} href={instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram"><IconInstagram /></a>
+              ) : (
+                <button className={styles.iconBtn} onClick={bag.openCart}
+                  aria-label={`Bag, ${bag.count} item${bag.count === 1 ? "" : "s"}`}>
+                  <IconBag />
+                  {bag.count > 0 && <span className={styles.cartCount}>{bag.count}</span>}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -404,8 +456,8 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
             <button className={styles.menuLink} onClick={() => goShop("saved")}>Saved{saved.length ? ` (${saved.length})` : ""}</button>
           </nav>
           <div className={styles.menuFoot}>
-            <a className={`${styles.btn} ${styles.btnPrimary}`} href={wa("Hello Impact Store, I would like to know more about your collection.")} target="_blank" rel="noopener noreferrer">
-              <IconWhatsApp /> Order on WhatsApp
+            <a className={`${styles.btn} ${styles.btnPrimary}`} href={wa(`Hello ${brand}, I would like to know more about your collection.`)} target="_blank" rel="noopener noreferrer">
+              {preview ? <IconInstagram /> : <IconWhatsApp />} Order on {via}
             </a>
             <a className={styles.linkRule} href={instagram} target="_blank" rel="noopener noreferrer">Instagram</a>
           </div>
@@ -418,11 +470,11 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
           <section className={styles.heroSplit} aria-label="Featured piece">
             <div className={styles.heroSplitBody}>{heroCopy}</div>
             <button className={styles.heroSplitMedia} onClick={() => openQuick(heroItem)} aria-label={`View ${heroItem.name}`}>
-              <Media img={heroItem.images[0]} tone={heroItem.tone} sizes={HALF_SIZES} preload />
+              <Media img={heroItem.images.find((im) => im.model) ?? front(heroItem)} tone={heroItem.tone} sizes={HALF_SIZES} preload />
               <span className={styles.heroCaption}>
                 <span>Featured</span>
                 <b>{heroItem.name}</b>
-                <span>{inr(heroItem.price)}</span>
+                <span>{money(heroItem.price)}</span>
               </span>
             </button>
           </section>
@@ -439,10 +491,10 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
         {/* ── Trust row ── */}
         <div className={styles.trustRow}>
           <div className={styles.trustInner}>
-            <div className={styles.trustItem}><IconTruck />Shipping above ₹1,999</div>
-            <div className={styles.trustItem}><IconReturn />7-day exchange</div>
-            <div className={styles.trustItem}><IconWallet />Cash on delivery</div>
-            <div className={styles.trustItem}><IconThread />100% authentic</div>
+            {copy.trust.map((t, n) => {
+              const TrustIcon = [IconTruck, IconReturn, IconWallet, IconThread][n % 4];
+              return <div key={t} className={styles.trustItem}><TrustIcon />{t}</div>;
+            })}
           </div>
         </div>
 
@@ -549,10 +601,11 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
               {visible.map((p) => (
                 <article className={`${styles.card} ${p.inStock ? "" : styles.soldOut}`} key={p.id}>
                   <div className={styles.cardMedia}>
-                    <Media img={p.images[0]} tone={p.tone} motif={p.motif} sizes={CARD_SIZES} alt={p.colour ? `${p.name}, ${p.colour}` : p.name} />
-                    {p.images[1] && (
-                      <Image src={p.images[1].src} alt="" fill sizes={CARD_SIZES} className={`${styles.ph} ${styles.photo} ${styles.altImg}`} />
+                    <Media img={front(p)} tone={p.tone} motif={p.motif} sizes={CARD_SIZES} alt={p.colour ? `${p.name}, ${p.colour}` : p.name} />
+                    {back(p) && (
+                      <Image src={back(p)!.src} alt="" fill sizes={CARD_SIZES} className={`${styles.ph} ${styles.photo} ${styles.altImg}`} />
                     )}
+                    {p.images.some((im) => im.model) && <span className={styles.onModel}>On model</span>}
                     {(!p.inStock || p.tag) && <span className={styles.cardTag}>{p.inStock ? p.tag : "Sold out"}</span>}
                     <button className={`${styles.wishBtn} ${saved.includes(p.id) ? styles.wishOn : ""}`} onClick={() => toggleSave(p.id)}
                       aria-pressed={saved.includes(p.id)} aria-label={`${saved.includes(p.id) ? "Remove" : "Save"} ${p.name}`}>
@@ -564,7 +617,7 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
                     <h3 className={styles.cardName}>{p.name}</h3>
                     {(p.colour || p.category) && <span className={styles.cardMeta}>{p.colour || p.category}</span>}
                     <span className={styles.cardPrice}>
-                      {inr(p.price)}{p.mrp && p.mrp > p.price ? <span className={styles.mrp}>{inr(p.mrp)}</span> : null}
+                      {money(p.price)}{p.price > 0 && p.mrp && p.mrp > p.price ? <span className={styles.mrp}>{inr(p.mrp)}</span> : null}
                     </span>
                   </div>
                 </article>
@@ -608,23 +661,15 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
           <div className={styles.wrap}>
             <div className={styles.split}>
               <div className={`${styles.splitMedia} reveal`}>
-                <Media img={storyImg} tone="tEcru" sizes={HALF_SIZES} alt={catalog.site.story ? "Impact Store" : ""} />
+                <Media img={storyImg} tone="tEcru" sizes={HALF_SIZES} alt={catalog.site.story ? brand : ""} />
               </div>
               <div className={`${styles.splitBody} reveal`}>
                 <span className={styles.label}>Our story</span>
-                <h2>Only the gear worth wearing.</h2>
-                <p>
-                  Impact Store started as a way to get authentic sportswear and streetwear to people who
-                  care how they look, without the markup and the endless wait. Jerseys, sneakers, tees,
-                  shirts and denim from the brands you actually want.
-                </p>
-                <p>
-                  Every piece is checked before it ships. If it is not right, we would rather hold it
-                  back than send it out.
-                </p>
-                <p className={styles.quote}>“We stock what we would wear ourselves, and nothing we would not.”</p>
+                <h2>{copy.storyTitle}</h2>
+                {copy.story.map((para) => <p key={para.slice(0, 24)}>{para}</p>)}
+                {copy.quote && <p className={styles.quote}>“{copy.quote}”</p>}
                 <div style={{ marginTop: "1.8rem" }}>
-                  <a className={`${styles.btn} ${styles.btnLine}`} href={wa("Hello Impact Store, I have a question about sizing and fabric.")} target="_blank" rel="noopener noreferrer">
+                  <a className={`${styles.btn} ${styles.btnLine}`} href={wa(`Hello ${brand}, I have a question about sizing and fabric.`)} target="_blank" rel="noopener noreferrer">
                     Talk to us
                   </a>
                 </div>
@@ -639,9 +684,9 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
         <section className={`${styles.sectionTight} ${styles.band}`}>
           <div className={styles.wrap}>
             <div className={`${styles.secHead} ${styles.secHeadCenter} reveal`}>
-              <span className={styles.label}>@impact.store</span>
+              <span className={styles.label}>{igLabel}</span>
               <h2 className={styles.secTitle}>Follow along</h2>
-              <p className={styles.secNote}>New drops land on Instagram first. Tag us when your order arrives.</p>
+              <p className={styles.secNote}>{copy.igNote}</p>
             </div>
             <div className={`${styles.igGrid} reveal`}>
               {igTiles.map((t) => (
@@ -655,7 +700,7 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
         </section>
 
         {/* ── Newsletter ── */}
-        <section className={styles.section}>
+        {!preview && <section className={styles.section}>
           <div className={styles.wrap}>
             <div className={`${styles.newsInner} reveal`}>
               <div>
@@ -677,7 +722,7 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
               </div>
             </div>
           </div>
-        </section>
+        </section>}
       </main>
 
       {/* ── Footer ── */}
@@ -686,8 +731,8 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
           <div className={styles.footTop}>
             <div>
               <span className={styles.brandMark}>{brand}</span>
-              <p className={styles.footBrandBlurb}>Authentic sportswear and streetwear. Shipped across India.</p>
-              <div className={styles.payRow}><span>UPI</span><span>Cards</span><span>Net banking</span><span>COD</span></div>
+              <p className={styles.footBrandBlurb}>{copy.footBlurb}</p>
+              {!preview && <div className={styles.payRow}><span>UPI</span><span>Cards</span><span>Net banking</span><span>COD</span></div>}
             </div>
             <div className={styles.footCol}>
               <h4>Shop</h4>
@@ -702,9 +747,9 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
               <h4>Help</h4>
               <ul>
                 <li><button onClick={() => setGuideOpen(true)}>Size guide</button></li>
-                <li><button onClick={() => setInfo("shipping")}>Shipping and returns</button></li>
-                <li><button onClick={() => setInfo("contact")}>Contact us</button></li>
-                <li><a href={wa("Hello Impact Store, I need help with an order.")} target="_blank" rel="noopener noreferrer">WhatsApp us</a></li>
+                {!preview && <li><button onClick={() => setInfo("shipping")}>Shipping and returns</button></li>}
+                {!preview && <li><button onClick={() => setInfo("contact")}>Contact us</button></li>}
+                <li><a href={wa(`Hello ${brand}, I need help with an order.`)} target="_blank" rel="noopener noreferrer">Message us on {via}</a></li>
               </ul>
             </div>
             <div className={styles.footCol}>
@@ -712,14 +757,14 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
               <ul>
                 <li><a href="#story">Our story</a></li>
                 <li><a href={instagram} target="_blank" rel="noopener noreferrer">Instagram</a></li>
-                <li><a href="/legal/privacy-policy">Privacy policy</a></li>
-                <li><a href="/legal/terms">Terms of service</a></li>
-                <li><a href="/legal/refund">Refund policy</a></li>
+                {!preview && <li><a href="/legal/privacy-policy">Privacy policy</a></li>}
+                {!preview && <li><a href="/legal/terms">Terms of service</a></li>}
+                {!preview && <li><a href="/legal/refund">Refund policy</a></li>}
               </ul>
             </div>
           </div>
           <div className={styles.footBottom}>
-            <span>© {year} Impact Store.{IS_DEMO_BRAND ? " Demonstration template." : ""}</span>
+            <span>© {year} {brand}.{IS_DEMO_BRAND ? " Demonstration template." : ""}</span>
             <span>Built by DM to Store</span>
           </div>
         </div>
@@ -729,15 +774,17 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
       <nav className={styles.dock} aria-label="Quick navigation">
         <a href="#top" className={styles.dockOn} aria-label="Top"><IconHome /></a>
         <a href={edits.length >= 2 ? "#collections" : "#shop"} aria-label="Collections"><IconGrid /></a>
-        <button onClick={bag.openCart} aria-label={`Bag, ${bag.count} item${bag.count === 1 ? "" : "s"}`}>
-          <IconBag />
-          {bag.count > 0 && <span className={styles.cartCount}>{bag.count}</span>}
-        </button>
+        {!preview && (
+          <button onClick={bag.openCart} aria-label={`Bag, ${bag.count} item${bag.count === 1 ? "" : "s"}`}>
+            <IconBag />
+            {bag.count > 0 && <span className={styles.cartCount}>{bag.count}</span>}
+          </button>
+        )}
         <button onClick={() => goShop("saved")} aria-label={`Saved, ${saved.length} items`}>
           <IconHeart />
           {saved.length > 0 && <span className={styles.count}>{saved.length}</span>}
         </button>
-        <a className={styles.dockWa} href={wa("Hello Impact Store!")} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><IconWhatsApp /></a>
+        <a className={styles.dockWa} href={wa(`Hello ${brand}!`)} target="_blank" rel="noopener noreferrer" aria-label={via}>{preview ? <IconInstagram /> : <IconWhatsApp />}</a>
       </nav>
 
       {/* ── Quick view ── */}
@@ -748,6 +795,7 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
             <div className={styles.modalMedia}>
               <Media key={shot} img={quick.images[shot]} tone={quick.tone} motif={quick.motif} sizes="(min-width: 700px) 440px, 100vw"
                 alt={`${quick.name}${quick.images.length > 1 ? `, photo ${shot + 1} of ${quick.images.length}` : ""}`} />
+              {quick.images[shot]?.model && <span className={styles.onModel}>On model</span>}
               {quick.images.length > 1 && (
                 <div className={styles.thumbs} role="group" aria-label="Photos">
                   {quick.images.map((im, n) => (
@@ -764,7 +812,7 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
               <span className={styles.label}>{quick.inStock ? (quick.colour || quick.category) : "Sold out"}</span>
               <h3 className={styles.modalName}>{quick.name}</h3>
               <p className={styles.modalPrice}>
-                {inr(quick.price)}{quick.mrp && quick.mrp > quick.price ? <span className={styles.mrp}>{inr(quick.mrp)}</span> : null}
+                {money(quick.price)}{quick.price > 0 && quick.mrp && quick.mrp > quick.price ? <span className={styles.mrp}>{inr(quick.mrp)}</span> : null}
               </p>
               {quick.desc && <p className={styles.modalDesc}>{quick.desc}</p>}
 
@@ -791,13 +839,17 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
               )}
 
               <div className={styles.modalActions}>
-                {quick.inStock ? (
+                {preview ? (
+                  <a className={`${styles.btn} ${styles.btnPrimary}`} href={instagram} target="_blank" rel="noopener noreferrer">
+                    <IconInstagram /> Order on Instagram
+                  </a>
+                ) : quick.inStock ? (
                   <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => addToBag(quick)}>
                     <IconBag /> Add to bag
                   </button>
                 ) : (
                   <a className={`${styles.btn} ${styles.btnLine}`} target="_blank" rel="noopener noreferrer"
-                    href={wa(`Hello Impact Store, will the ${quick.name}${quick.code ? ` (code #${quick.code})` : ""} be back in stock?`)}>
+                    href={wa(`Hello ${brand}, will the ${quick.name}${quick.code ? ` (code #${quick.code})` : ""} be back in stock?`)}>
                     Ask about restock
                   </a>
                 )}
@@ -805,8 +857,8 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
                   {saved.includes(quick.id) ? "Saved" : "Save"}
                 </button>
               </div>
-              {quick.inStock && sizeHint && !size && <p className={styles.cartError}>Please choose a size first.</p>}
-              <p className={styles.modalNote}><IconInfo /> Dispatched in 2 to 3 working days.</p>
+              {!preview && quick.inStock && sizeHint && !size && <p className={styles.cartError}>Please choose a size first.</p>}
+              {!preview && <p className={styles.modalNote}><IconInfo /> Dispatched in 2 to 3 working days.</p>}
             </div>
           </div>
         </div>
@@ -834,7 +886,7 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
             <p className={styles.guideNote}>
               Body measurements in inches, not the garment, and approximate. Fits vary by brand. If you
               are between two sizes, take the larger one. Shoes are in UK sizes. Unsure? Send us the
-              product and your size on WhatsApp and we will help you get it right.
+              product and your size on {via} and we will help you get it right.
             </p>
           </div>
         </div>
@@ -868,7 +920,7 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
                   <div><h4>Hours</h4><p>Monday to Saturday, 10am to 8pm IST.</p></div>
                 </div>
                 <div style={{ marginTop: "1.6rem", display: "flex", gap: ".6rem", flexWrap: "wrap" }}>
-                  <a className={`${styles.btn} ${styles.btnPrimary}`} href={wa("Hello Impact Store!")} target="_blank" rel="noopener noreferrer"><IconWhatsApp /> Message us</a>
+                  <a className={`${styles.btn} ${styles.btnPrimary}`} href={wa(`Hello ${brand}!`)} target="_blank" rel="noopener noreferrer"><IconWhatsApp /> Message us</a>
                   <a className={`${styles.btn} ${styles.btnSoft}`} href={instagram} target="_blank" rel="noopener noreferrer">Instagram</a>
                 </div>
               </>
@@ -878,7 +930,7 @@ export default function Storefront({ catalog, settings }: { catalog: Catalog; se
       )}
 
       {/* ── Shopping bag + checkout ── */}
-      <Cart items={items} config={{ brand, phone: whatsappPhone, upiVpa, upiName, wa }} />
+      {!preview && <Cart items={items} config={{ brand, phone: whatsappPhone, upiVpa, upiName, wa }} />}
     </div>
   );
 }

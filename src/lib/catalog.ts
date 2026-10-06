@@ -10,6 +10,8 @@ export type CatalogImage = {
   /** Tiny base64 WebP shown blurred while the photo loads. Optional
       (DB-served products don't carry one; the image just loads without it). */
   blur?: string;
+  /** A photo of someone wearing the piece. Shown on hover and as "On model". */
+  model?: boolean;
 };
 
 export type CatalogProduct = {

@@ -74,6 +74,7 @@ export default function ImageUploader({ value, onChange }: { value: ProductImage
   }
 
   const removeAt = (i: number) => onChange(value.filter((_, j) => j !== i));
+  const toggleModel = (i: number) => onChange(value.map((im, j) => (j === i ? { ...im, model: !im.model } : im)));
 
   return (
     <div className={styles.uploader}>
@@ -82,7 +83,11 @@ export default function ImageUploader({ value, onChange }: { value: ProductImage
           {value.map((im, i) => (
             <div className={styles.thumb} key={im.src}>
               <Image src={im.src} alt="" width={96} height={96} unoptimized={im.src.startsWith("/catalog/")} />
-              {i === 0 && <span className={styles.thumbFirst}>MAIN</span>}
+              {i === 0 && !im.model && <span className={styles.thumbFirst}>MAIN</span>}
+              <button type="button" className={`${styles.thumbModel} ${im.model ? styles.thumbModelOn : ""}`} onClick={() => toggleModel(i)}
+                aria-pressed={Boolean(im.model)} title="Mark as a photo of someone wearing it (shows as On model)">
+                {im.model ? "ON MODEL" : "Model?"}
+              </button>
               <button type="button" className={styles.thumbDel} onClick={() => removeAt(i)} aria-label="Remove image">×</button>
             </div>
           ))}
