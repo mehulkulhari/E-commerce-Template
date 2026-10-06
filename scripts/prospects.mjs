@@ -8,6 +8,7 @@
      npm run prospects -- export                  → prospects/outreach.csv
      npm run prospects -- status <handle> sent|replied|won|lost
      npm run prospects -- remove <handle>         (takes the preview link down)
+     npm run prospects -- recheck [--apply]       (re-apply fit rules; --apply removes misfits)
      npm run prospects -- add <handle...>         (add shops you found yourself)
      npm run prospects -- test                    (check extraction, no network)
 
@@ -308,6 +309,28 @@ async function remove() {
   say.ok(`Preview for @${h} taken down and its photos deleted. The link now shows "not found".`);
 }
 
+/** Re-apply the current fit rules to every stored account. Lists built
+    previews that no longer fit; --apply takes those previews down. */
+async function recheck() {
+  const db = load();
+  const misfits = [];
+  for (const rec of Object.values(db)) {
+    if (rec.status === "removed" || !rec.profile) continue;
+    const q = qualify({ ...rec.profile, followersCount: rec.followers, externalUrls: rec.links.map((url) => ({ url })) },
+      { genre: rec.genreLocked ? rec.genre : undefined, min: 0, max: Infinity });
+    if (q.ok || rec.genreLocked) continue;
+    rec.qualified = false;
+    rec.reason = q.why.join("; ");
+    if (rec.slug) misfits.push(rec);
+    else if (rec.status === "new") rec.status = "skipped";
+  }
+  save(db);
+  if (!misfits.length) { say.ok("Every built preview still fits."); return; }
+  for (const r of misfits) console.log(`  @${r.username.padEnd(30)} ${r.reason}`);
+  if (!a.apply) { say.warn(`${misfits.length} built preview(s) no longer fit. Rerun with --apply to take them down.`); return; }
+  for (const r of misfits) { a._ = ["remove", r.username]; await remove(); }
+}
+
 async function selfTest() {
   const { pricesFrom, nameFrom, categoryOf, hasOwnWebsite: site, classify: cls, sellerProblems: sp } = await import("./lib/extract.mjs");
   const cases = [
@@ -331,6 +354,8 @@ async function selfTest() {
     [sp({ biography: "Kurtis & co-ords, all over India delivery" }, "apparel"), []],
     [sp({ biography: "Just my art and life" }, "handicrafts"), ["no sign of selling (no order / price / delivery mentions)"]],
     [cityFrom(["Delhi", "Jaipur"], "jaipur artificial jewellery"), "Jaipur"],
+    [sp({ biography: "A best in class Home Decor and Furnishing Store" }, "handicrafts"), []],
+    [sp({ biography: "Silver / gold jewellery. Shipping all over india. Cod" }, "jewellery").includes("fine gold/silver jeweller, not artificial jewellery"), true],
   ];
   let bad = 0;
   for (const [got, want] of cases) {
@@ -341,7 +366,7 @@ async function selfTest() {
   say.ok("All extraction checks passed.");
 }
 
-const run = { discover, add, list: () => list(), build, export: exportCsv, status: setStatus, remove, test: selfTest }[cmd];
+const run = { discover, add, list: () => list(), build, export: exportCsv, status: setStatus, remove, recheck, test: selfTest }[cmd];
 if (!run) {
   console.log(fs.readFileSync(new URL(import.meta.url), "utf8").split("\n").slice(1, 17).join("\n").replace(/^\/\*|\*\/$/gm, ""));
   process.exit(cmd ? 1 : 0);

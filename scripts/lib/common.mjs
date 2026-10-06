@@ -72,7 +72,7 @@ export async function uploadImage(sb, bucket, objectPath, img, extra = {}) {
 
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36";
 export async function download(url) {
-  const r = await fetch(url, { headers: { "User-Agent": UA, Accept: "image/avif,image/webp,image/*,*/*" } });
+  const r = await fetch(url, { headers: { "User-Agent": UA, Accept: "image/avif,image/webp,image/*,*/*" }, signal: AbortSignal.timeout(25000) });
   if (!r.ok) throw new Error(`download ${r.status}`);
   return Buffer.from(await r.arrayBuffer());
 }

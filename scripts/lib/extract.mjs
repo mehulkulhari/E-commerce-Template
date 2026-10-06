@@ -41,9 +41,9 @@ export function classify(profile) {
    online through Instagram (a physical shop is not required), without a site. */
 const NOT_A_SELLER = /\b(restaurants?|caf[eé]s?|cuisine|dining|food|bakery|bakers|cakes?|hotels?|homestay|resort|salon|spa|makeup artist|mua\b|photograph(y|er)|wedding planner|event planner|decorators?|interior designer|architects?|real estate|academy|classes|coaching|tutor)\b/i;
 const B2B_ONLY = /\b(b2b|wholesale only|wholesalers? only|resellers? only|retailers? only|job ?work|bulk only)\b/i;
-const FINE_JEWELLERY = /\b(22 ?k(t|arat)?|22 ?ct|18 ?k(t|arat)?|hallmark(ed)?|bis\b|diamond jewell?e?ry|gold jewell?ers?|solitaires?|certified diamonds?|jadau|925|92\.5|sterling|pure silver|real silver|silver jewell?e?ry)\b/i;
+const FINE_JEWELLERY = /\b(22 ?k(t|arat)?|22 ?ct|18 ?k(t|arat)?|hallmark(ed)?|bis\b|diamond jewell?e?ry|gold jewell?e?r(s|y)?|gold ?(\/|&|and) ?silver|silver ?(\/|&|and) ?gold|solitaires?|certified diamonds?|jadau|925|92\.5|sterling|pure silver|real silver|silver jewell?e?ry)\b/i;
 const ARTIFICIAL = /\b(artificial|imitation|oxidi[sz]ed|fashion jewell?e?ry|american diamond|\bad\b|kundan|polki|anti[- ]?tarnish|gold[- ]plated|silver[- ]plated|plated|rental|for rent|costume|stainless|western jewell?e?ry|korean)\b/i;
-const SELLS = /(dm (to|for) (order|price|details)|dm us|order now|orders? (open|accepted|booking)|shipping|delivery|deliver|\bcod\b|cash on delivery|price|₹|\brs\.? ?\d|whats ?app|buy|shop now|available|book (now|yours)|online|pan[- ]?india|all over india|dispatch|in stock|sale\b)/i;
+const SELLS = /(dm (to|for) (order|price|details)|dm us|order now|orders? (open|accepted|booking)|shipping|delivery|deliver|\bcod\b|cash on delivery|price|₹|\brs\.? ?\d|whats ?app|buy|shop now|available|book (now|yours)|online|pan[- ]?india|all over india|dispatch|in stock|sale\b|\bstore\b|\bshop\b|showroom)/i;
 
 /** Reasons this account isn't a fit (empty = fine). */
 export function sellerProblems(profile, genre) {
