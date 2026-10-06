@@ -66,7 +66,7 @@ function qualify(profile, opts) {
   const genre = opts.genre ?? cls.genre;
   const why = [];
   if (profile.private) why.push("private account");
-  if (profile.verified) why.push("verified (likely a big brand)");
+  // Verified is NOT a reason to skip: many small sellers pay for Meta Verified.
   if (hasOwnWebsite(profile)) why.push(`already has a website (${linksOf(profile)[0]})`);
   if ((profile.followersCount ?? 0) < min) why.push(`only ${profile.followersCount ?? 0} followers`);
   if ((profile.followersCount ?? 0) > max) why.push(`${profile.followersCount} followers (too big)`);
@@ -319,17 +319,22 @@ async function remove() {
 async function recheck() {
   const db = load();
   const misfits = [];
+  let promoted = 0;
   for (const rec of Object.values(db)) {
     if (rec.status === "removed" || !rec.profile) continue;
-    const q = qualify({ ...rec.profile, followersCount: rec.followers, externalUrls: rec.links.map((url) => ({ url })) },
-      { genre: rec.genreLocked ? rec.genre : undefined, min: 0, max: Infinity });
-    if (q.ok || rec.genreLocked) continue;
+    if (rec.genreLocked || String(rec.reason ?? "").startsWith("reviewed:")) continue; // your own picks / my manual calls stand
+    const q = qualify({ ...rec.profile, followersCount: rec.followers, externalUrls: rec.links.map((url) => ({ url })) }, {});
+    if (q.ok) {
+      if (!rec.qualified && !rec.slug) { rec.qualified = true; rec.reason = null; rec.status = "new"; promoted++; }
+      continue;
+    }
     rec.qualified = false;
     rec.reason = q.why.join("; ");
     if (rec.slug) misfits.push(rec);
     else if (rec.status === "new") rec.status = "skipped";
   }
   save(db);
+  if (promoted) say.ok(`${promoted} skipped account(s) now fit and are ready to build.`);
   if (!misfits.length) { say.ok("Every built preview still fits."); return; }
   for (const r of misfits) console.log(`  @${r.username.padEnd(30)} ${r.reason}`);
   if (!a.apply) { say.warn(`${misfits.length} built preview(s) no longer fit. Rerun with --apply to take them down.`); return; }
@@ -373,6 +378,10 @@ async function selfTest() {
     [sp({ biography: "Kurtis & co-ords, all over India delivery" }, "apparel"), []],
     [sp({ biography: "Just my art and life" }, "handicrafts"), ["no sign of selling (no order / price / delivery mentions)"]],
     [cityFrom(["Delhi", "Jaipur"], "jaipur artificial jewellery"), "Jaipur"],
+    [sp({ biography: "Qum Kurties | Wholesale Kurtis Trendy, Affordable, minimum order 5000 Pan-India" }, "apparel").includes("B2B / wholesale only"), true],
+    [sp({ biography: "WHOLESALE & RETAIL SUITS | LEHENGA | SHARARA. ORDERS via Whatsapp only" }, "apparel"), []],
+    [sp({ biography: "A GREAT TOUR INTO DECOR WORLD! Manufacturer/Wholesaler/Retailer. Pan India shipping" }, "handicrafts"), []],
+    [sp({ biography: "Rattan Cane Webbing Supplier. Cane, Rope, PVC Wicker" }, "handicrafts").includes("B2B / wholesale only"), true],
     [sp({ biography: "A best in class Home Decor and Furnishing Store" }, "handicrafts"), []],
     [sp({ biography: "Silver / gold jewellery. Shipping all over india. Cod" }, "jewellery").includes("fine gold/silver jeweller, not artificial jewellery"), true],
   ];

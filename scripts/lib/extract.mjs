@@ -42,7 +42,10 @@ export function classify(profile) {
    online through Instagram (a physical shop is not required), without a site. */
 const NOT_A_SELLER = /\b(restaurants?|caf[eé]s?|cuisine|dining|food|bakery|bakers|cakes?|hotels?|homestay|resort|salon|spa|makeup artist|mua\b|photograph(y|er)|wedding planner|event planner|decorators?|interior designer|architects?|real estate|academy|classes|coaching|tutor)\b/i;
 const B2B_ONLY = /\b(b2b|wholesale only|wholesalers? only|resellers? only|retailers? only|job ?work|bulk only)\b/i;
-const FINE_JEWELLERY = /\b(22 ?k(t|arat)?|22 ?ct|18 ?k(t|arat)?|hallmark(ed)?|bis\b|diamond jewell?e?ry|gold jewell?e?r(s|y)?|gold ?(\/|&|and) ?silver|silver ?(\/|&|and) ?gold|solitaires?|certified diamonds?|jadau|925|92\.5|sterling|pure silver|real silver|silver jewell?e?ry)\b/i;
+// Manufacturers / wholesalers / suppliers are only a fit if they also sell retail.
+const WHOLESALE = /\b(wholesal\w*|wholsale|manufactur\w*|mfg|bulk (orders?|quantity|only)|minimum order|moq|exporters?|distributors?|suppliers?|resellers? (are )?welcome|boutique supplies)\b/i;
+const RETAIL = /\bretail|single piece|\bcod\b|cash on delivery|home delivery|free shipping|for ?sale\b|payment by|paytm|g ?pay|phone ?pe|dm (to|for) order|order now|shop now|online shopping|in-store|customers?\b/i;
+const FINE_JEWELLERY =/\b(22 ?k(t|arat)?|22 ?ct|18 ?k(t|arat)?|hallmark(ed)?|bis\b|diamond jewell?e?ry|gold jewell?e?r(s|y)?|gold ?(\/|&|and) ?silver|silver ?(\/|&|and) ?gold|solitaires?|certified diamonds?|jadau|925|92\.5|sterling|pure silver|real silver|silver jewell?e?ry)\b/i;
 const ARTIFICIAL = /\b(artificial|imitation|oxidi[sz]ed|fashion jewell?e?ry|american diamond|\bad\b|kundan|polki|anti[- ]?tarnish|gold[- ]plated|silver[- ]plated|plated|rental|for rent|costume|stainless|western jewell?e?ry|korean)\b/i;
 const SELLS = /(dm (to|for) (order|price|details)|dm us|order now|orders? (open|accepted|booking)|shipping|delivery|deliver|\bcod\b|cash on delivery|price|₹|\brs\.? ?\d|whats ?app|buy|shop now|available|book (now|yours)|online|pan[- ]?india|all over india|dispatch|in stock|sale\b|\bstore\b|\bshop\b|showroom)/i;
 
@@ -52,7 +55,7 @@ export function sellerProblems(profile, genre) {
   const captions = (profile.latestPosts ?? []).map((p) => p.caption ?? "").join(" \n ");
   const why = [];
   if (NOT_A_SELLER.test(bio)) why.push("not a product seller (services / food / venue)");
-  if (B2B_ONLY.test(bio)) why.push("B2B / wholesale only");
+  if (B2B_ONLY.test(bio) || (WHOLESALE.test(bio) && !RETAIL.test(bio))) why.push("B2B / wholesale only");
   if (genre === "jewellery" && FINE_JEWELLERY.test(bio) && !ARTIFICIAL.test(`${bio} ${captions}`)) why.push("fine gold/silver jeweller, not artificial jewellery");
   if (!SELLS.test(`${bio} ${captions}`)) why.push("no sign of selling (no order / price / delivery mentions)");
   return why;
@@ -216,7 +219,7 @@ export function productsFrom(posts = [], genre, max = 12, brand) {
     if (out.length >= max) break;
     const caption = post.caption ?? "";
     if (isNonProduct(caption)) continue;
-    const imgs = imagesOf(post).slice(0, 3);
+    const imgs = imagesOf(post).slice(0, 2); // 2 photos per piece keeps storage well under the free 1 GB
     if (!imgs.length) continue;
     let category = categoryOf(`${caption} ${(post.hashtags ?? []).join(" ")}`, genre);
     const info = nameInfo(caption, category, genre, brand);
