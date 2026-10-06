@@ -7,6 +7,8 @@ const EMOJI = /[\p{Extended_Pictographic}\p{Emoji_Modifier}\u200d\ufe0f\u20e3]/g
 /** Strip emojis, hashtags, mentions and links; collapse whitespace. */
 export function clean(s = "") {
   return String(s)
+    .replace(/[™®©℠]/g, "")
+    .normalize("NFKC") // "𝗔𝗳𝗳𝗼𝗿𝗱𝗮𝗯𝗹𝗲" fancy-font letters → "Affordable"
     .replace(EMOJI, " ")
     .replace(/https?:\/\/\S+/g, " ")
     .replace(/[#@][\p{L}\p{N}_.]+/gu, " ")
@@ -58,6 +60,10 @@ export function sellerProblems(profile, genre) {
   if (B2B_ONLY.test(bio) || (WHOLESALE.test(bio) && !RETAIL.test(bio))) why.push("B2B / wholesale only");
   if (genre === "jewellery" && FINE_JEWELLERY.test(bio) && !ARTIFICIAL.test(`${bio} ${captions}`)) why.push("fine gold/silver jeweller, not artificial jewellery");
   if (!SELLS.test(`${bio} ${captions}`)) why.push("no sign of selling (no order / price / delivery mentions)");
+  // Searches sometimes surface shops abroad (e.g. a Hong Kong jeweller writing in Cantonese).
+  const letters = (`${bio} ${captions}`.match(/\p{L}/gu) ?? []).length;
+  const foreign = (`${bio} ${captions}`.match(/[\p{Script=Han}\p{Script=Hangul}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Thai}\p{Script=Arabic}\p{Script=Cyrillic}]/gu) ?? []).length;
+  if (letters > 40 && foreign / letters > 0.3) why.push("not an Indian shop (captions mostly in another script)");
   return why;
 }
 
@@ -109,9 +115,19 @@ const CATEGORIES = {
     ["Bags", /\bbags?\b|totes?|clutch|potli/i], ["Candles & Diyas", /candles?|diyas?/i], ["Decor", /decor|showpiece|figurines?|idols?/i],
   ],
 };
+/** The category whose keyword appears FIRST in the text ("Table Runner with
+    4 Tea Lights" is a textile, not a lamp). */
+const BROAD = new Set(["Bridal Wear", "Jewellery Sets", "Bridal Jewellery", "Decor"]);
 export function categoryOf(text, genre) {
-  for (const [name, re] of CATEGORIES[genre] ?? []) if (re.test(text)) return name;
-  return "New Arrivals";
+  let best = null, at = Infinity, broad = null, broadAt = Infinity;
+  for (const [name, re] of CATEGORIES[genre] ?? []) {
+    const i = String(text).search(re);
+    if (i < 0) continue;
+    if (BROAD.has(name)) { if (i < broadAt) { broad = name; broadAt = i; } }
+    else if (i < at) { best = name; at = i; }
+  }
+  // Broad buckets (Bridal, Sets, Decor) only when nothing specific matched.
+  return best ?? broad ?? "New Arrivals";
 }
 
 /** Price (and MRP, if a higher "was" price is given) from a caption.
@@ -136,6 +152,10 @@ const TRAILING_FILLER = /(\s+|^)(for|with|your|and|the|of|in|to|a|an|by|at|&|on)
 
 const titleCase = (s) => s.toLowerCase().replace(/(^|[\s(/&-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
 
+/** Title Case the way shops write names: "Pink Georgette Suit with Gota Work". */
+const MINOR = new Set(["a", "an", "and", "as", "at", "by", "for", "in", "of", "on", "or", "the", "to", "with"]);
+const storeCase = (s) => titleCase(s).split(" ").map((w, i) => (i > 0 && MINOR.has(w.toLowerCase()) ? w.toLowerCase() : w)).join(" ");
+
 const SINGULAR = {
   "Rajputi Poshak": "Rajputi Poshak", Lehengas: "Lehenga", Sarees: "Saree", "Kurtis & Kurtas": "Kurti", "Suit Sets": "Suit Set",
   "Co-ord Sets": "Co-ord Set", Dresses: "Dress", Dupattas: "Dupatta", "Tops & Shirts": "Top", Bottoms: "Bottom Wear", "Bridal Wear": "Bridal Outfit",
@@ -145,7 +165,11 @@ const SINGULAR = {
   Textiles: "Handloom Textile", Bags: "Bag", "Candles & Diyas": "Diya Set", Decor: "Decor Piece",
 };
 // What to call a piece whose caption says nothing about it.
-const UNNAMED = { apparel: "Look", jewellery: "Design", handicrafts: "Piece" };
+const UNNAMED = { apparel: "Look", jewellery: "Design", handicrafts: "Handmade Piece" };
+// "Very beautiful zardozi embroidery" -> "Zardozi embroidery".
+const LEAD_FILLER = /^((very|so|super|most) )?(beautiful|stunning|gorgeous|lovely|pretty|amazing|awesome|cute)\s+/i;
+// Run-together hashtags written without "#": "HomeDecor HandmadeDecor IndianHandicrafts".
+const camelTags = (t) => t.split(" ").filter((w) => /[a-z][A-Z]/.test(w)).length >= 2;
 const MATERIAL_WORDS = /\b(cotton|silk|georgette|chiffon|rayon|linen|velvet|organza|chanderi|banarasi|bandhej|bandhani|leheriya|gota|zari|embroider(ed|y)|block ?print(ed)?|kundan|polki|oxidi[sz]ed|pearls?|meenakari|temple|american diamond|bamboo|cane|jute|rattan|wicker|seagrass|terracotta|brass|wooden|macrame|handwoven|hand-?painted)\b/i;
 const COLOUR = /\b(red|maroon|rani|pink|peach|orange|yellow|mustard|haldi|green|mint|teal|blue|navy|purple|lavender|wine|white|ivory|cream|black|grey|golden|gold|silver|beige|brown|rust|magenta|multicolou?r)\b/i;
 const FILLER = [
@@ -168,19 +192,27 @@ export function nameInfo(caption, category, genre, brand) {
       if (brandRe) t = t.replace(brandRe, " ");
       for (const re of FILLER) t = t.replace(re, " ");
       t = t.replace(/\s+/g, " ").replace(/^[\s:\-–,*&()]+|[\s:\-–,*&(]+$/g, "");
-      if (t.length > 52) t = t.slice(0, 52).replace(/\s+\S*$/, "");
+      for (let i = 0; i < 2; i++) t = t.replace(LEAD_FILLER, "");
+      if (t.length > 52) {
+        // Cut after the last product word that fits, else at a word boundary.
+        const head = t.slice(0, 52);
+        const hits = genre ? [...head.matchAll(new RegExp(productWord(genre).source, "gi"))] : [];
+        const last = hits.at(-1);
+        t = last ? head.slice(0, last.index + last[0].length) : head.replace(/\s+\S*$/, "");
+      }
       for (let i = 0; i < 3; i++) t = t.replace(TRAILING_FILLER, "").trim();
       return t;
     })
     .filter((t) => t.length >= 4 && /\p{L}{3}/u.test(t) && !SKIP_LINE.test(t) && !/\d{5,}/.test(t)
-      && latinShare(t) >= 0.6 && (t.match(HINGLISH) ?? []).length < 2);
+      && latinShare(t) >= 0.6 && (t.match(HINGLISH) ?? []).length < 2 && !camelTags(t));
   let line = genre ? segs.find((t) => productWord(genre).test(t) && t.split(" ").length <= 9) : segs[0];
   if (!line) {
     const colour = String(caption ?? "").match(COLOUR)?.[1];
     const noun = SINGULAR[category] ?? UNNAMED[genre] ?? "Piece";
     return { name: titleCase(`${colour ? `${colour} ` : ""}${noun}`), generic: !colour || !SINGULAR[category] };
   }
-  if (line === line.toUpperCase() || line === line.toLowerCase()) line = titleCase(line);
+  if (line === line.toUpperCase() || line === line.toLowerCase()) line = storeCase(line);
+  line = line.charAt(0).toUpperCase() + line.slice(1);
   // A one-word name ("Pearl") reads better with its category ("Pearl Earrings").
   if (line.split(" ").length === 1 && SINGULAR[category] && !line.toLowerCase().includes(SINGULAR[category].toLowerCase())) {
     line = `${line} ${SINGULAR[category]}`;
@@ -189,10 +221,14 @@ export function nameInfo(caption, category, genre, brand) {
 }
 export const nameFrom = (caption, category, genre, brand) => nameInfo(caption, category, genre, brand).name;
 
-/** Short "about" text from the bio: drop contact lines, links and emojis. */
+// Street-address lines don't belong in an "About us".
+const ADDRESS = /\b(s\.?c\.?o\.?|shop (no|num)|sector|phase|road|marg|nagar|colony|vihar|market|bazaa?r|opp\.?|near|nr\.?|floor|plot|pin ?code|address|lane)\b|\d{3,}\s*,/i;
+
+/** Short "about" text from the bio: drop contact lines, addresses, links and emojis. */
 export function aboutFrom(bio = "") {
   const lines = String(bio).split("\n").map(clean)
-    .filter((l) => l.length > 3 && !/\d{6,}|whats ?app|wa\.me|call|dm (us|for|to)|order now|link|cod available|shipping/i.test(l));
+    .filter((l) => l.length > 3 && !/\d{6,}|whats ?app|wa\.me|call|dm (us|for|to)|order now|link|cod available|shipping/i.test(l)
+      && !ADDRESS.test(l));
   return lines.slice(0, 3).join("\n") || null;
 }
 
@@ -235,7 +271,7 @@ export function productsFrom(posts = [], genre, max = 12, brand) {
     const key = p.name.toLowerCase();
     const k = (seen.get(key) ?? 0) + 1;
     seen.set(key, k);
-    if (p.generic && total.get(key) > 1) p.name = `${p.name} ${String(k).padStart(2, "0")}`;
+    if (p.generic && (total.get(key) > 1 || Object.values(UNNAMED).includes(p.name))) p.name = `${p.name} ${String(k).padStart(2, "0")}`;
     else if (k > 1) p.name = `${p.name}, Style ${k}`;
     delete p.generic;
   }
@@ -250,15 +286,30 @@ const tidyBrand = (s) => {
     if (t.length >= 3) name = t;
   }
   if (name.length > 34) name = name.slice(0, 34).replace(/\s+\S*$/, "");
-  for (let i = 0; i < 3; i++) name = name.replace(TRAILING_FILLER, "").trim();
+  for (let i = 0; i < 3; i++) name = name.replace(TRAILING_FILLER, "").replace(/[\s,.;:&|-]+$/, "").trim();
   // SHOUTING words become Title Case; short acronyms (AD, SS) stay.
   return name.split(" ").map((w) => (w.length > 2 && w === w.toUpperCase() && /\p{L}/u.test(w) ? titleCase(w) : w)).join(" ");
 };
 
 /** Shop name: the profile name without taglines, trailing city or "official";
     falls back to the handle when the name isn't in English letters. */
+const BUSINESS = /\b(boutique|jewell?e?ry|jewels?|crafts?|handicrafts?|collections?|creations?|stores?|studio|fashions?|designs?|designer|label|house|mart|emporium|arts?|decor|kurtis?|sarees?|couture|wear|gallery|trends?|enterprises?|traders?|exports?|accessories|ethnic|clothing|shop|fabrics?|textiles?|garments?|suits?|rakhis?|gifts?)\b/i;
+
 export function brandFrom(profile) {
-  const fromName = tidyBrand(clean(profile.fullName ?? "").replace(/\s*[-–|:].*$/, ""));
+  let fromName = tidyBrand(clean(profile.fullName ?? "").replace(/\s*[-–|:].*$/, ""));
+  const handle = tidyBrand(titleCase(String(profile.username ?? "").replace(/[._]+/g, " ").trim()));
+  if (fromName && latinShare(fromName) >= 0.6 && !BUSINESS.test(fromName)) {
+    // The bio names the shop after the owner: "Jatinder Kaur" -> "Kaur's Designer Boutique".
+    const first = clean(String(profile.biography ?? "").split("\n")[0]).replace(/\s*([,|(•]|\s[-–—]\s).*$/, "").trim();
+    const shop = tidyBrand(first);
+    // Only the owner's first or last name counts, as a whole word ("Kaur" in "Kaur's").
+    const words = fromName.split(/\s+/);
+    const ownerWords = [words[0], words.at(-1)].filter((w) => w && w.length >= 3 && !BUSINESS.test(w));
+    const sharesName = ownerWords.some((w) => new RegExp(`\\b${escapeRe(w)}\\b`, "i").test(shop));
+    if (sharesName && BUSINESS.test(shop) && shop.split(" ").length <= 5 && latinShare(shop) >= 0.6) fromName = shop;
+    // The handle adds the trade: "Sharanyas" + @sharanyas.boutique -> "Sharanyas Boutique".
+    else if (handle.toLowerCase().startsWith(fromName.toLowerCase()) && BUSINESS.test(handle)) fromName = handle;
+  }
   if (fromName.length >= 2 && latinShare(fromName) >= 0.6) return fromName;
   return tidyBrand(titleCase(String(profile.username).replace(/[._]+/g, " ").trim()));
 }

@@ -353,7 +353,7 @@ async function recheck() {
 }
 
 async function selfTest() {
-  const { pricesFrom, nameFrom, categoryOf, brandFrom, hasOwnWebsite: site, classify: cls, sellerProblems: sp } = await import("./lib/extract.mjs");
+  const { pricesFrom, nameFrom, categoryOf, brandFrom, aboutFrom, hasOwnWebsite: site, classify: cls, sellerProblems: sp } = await import("./lib/extract.mjs");
   const cases = [
     [pricesFrom("New kurti set ✨ Price: ₹1,299 only"), { price: 1299 }],
     [pricesFrom("MRP 1999 offer price Rs. 1499/-"), { price: 1499, mrp: 1999 }],
@@ -362,7 +362,7 @@ async function selfTest() {
     [nameFrom("Gents Accessories Available at Risala The Boutique Jodhpur . . . #rajputana", "New Arrivals", "apparel", "Risala The Boutique"), "Look"],
     [nameFrom("Ye color pehnte hi sab puchenge – Kahan se liya? #orangeposhak", "Rajputi Poshak", "apparel"), "Rajputi Poshak"],
     [nameFrom("✨ राजस्थानी पोशाक की शान — New Baju & Loom Collection (Part 2)! ✨", "Rajputi Poshak", "apparel"), "Baju & Loom Collection"],
-    [nameFrom("Beautiful pink georgette suit with gota work", "Suit Sets", "apparel"), "Beautiful pink georgette suit with gota work"],
+    [nameFrom("Beautiful pink georgette suit with gota work", "Suit Sets", "apparel"), "Pink Georgette Suit with Gota Work"],
     [brandFrom({ fullName: "RISALA THE BOUTIQUE JODHPUR" }), "Risala The Boutique"],
     [categoryOf("Bridal and Mirror loom collection #rajputiposhak", "apparel"), "Rajputi Poshak"],
     [nameFrom("DM to order 💌", "Earrings", "jewellery"), "Earrings"],
@@ -374,6 +374,23 @@ async function selfTest() {
     [brandFrom({ fullName: "शिव", username: "_shiv_shakti_boutique_jodhpur" }), "Shiv Shakti Boutique"],
     [brandFrom({ fullName: "SHAGUN IMITATION Jewellery & Rentals on Hire" }), "Shagun Imitation Jewellery"],
     [categoryOf("Oxidized NeckPiece", "jewellery"), "Necklaces"],
+    [brandFrom({ fullName: "Jatinder kaur", biography: "KAUR'S DESIGNER BOUTIQUE ,CHANDIGARH (Since 2010)\nS.C.O 10-11, star bucks lane" }), "Kaur's Designer Boutique"],
+    [brandFrom({ fullName: "Hasin khan", biography: "MANUFACTURER,VINTAGE, OLD" }), "Hasin khan"],
+    [brandFrom({ fullName: "Sangeeta Godara", biography: "Sangeeta Boutique – Timeless Elegance Suits" }), "Sangeeta Boutique"],
+    [brandFrom({ fullName: "Jyoti garments", biography: "Kurtis| Tops|New collection|best price" }), "Jyoti garments"],
+    [brandFrom({ fullName: "𝗦𝗛𝗔𝗥𝗔𝗡𝗬𝗔𝗦", username: "sharanyas.boutique" }), "Sharanyas Boutique"],
+    [brandFrom({ fullName: "", username: "jaipur_imitation_jewellery_hub", biography: "#imitation jewellery" }), "Jaipur Imitation Jewellery Hub"],
+    [brandFrom({ fullName: "👑 शिव-शक्ती बुटीक 👑", username: "_shiv_shakti_boutique_jodhpur", biography: "❤️ Jewellery for Rent & Sale" }), "Shiv Shakti Boutique"],
+    [brandFrom({ fullName: "The Decor Souk™" }), "The Decor Souk"],
+    [brandFrom({ fullName: "Spring Fabrics", biography: "DESIGNER KURTIS & FABRICS" }), "Spring Fabrics"],
+    [sp({ biography: "Worldwide Delivery", latestPosts: [{ caption: "如果每日都有一份禮物等住拆 拉開一格再一格 每次都打開都係一份驚喜 呢種期待感就係 Advent Calendar 最令人上癮嘅地方 DM 查詢" }] }, "jewellery").includes("not an Indian shop (captions mostly in another script)"), true],
+    [brandFrom({ fullName: "Kusum Jaipur Handmade Rakhi, Festive Decor & Gifts", biography: "Handmade Rakhis | Festive Decor" }), "Kusum Jaipur Handmade Rakhi"],
+    [aboutFrom("KAUR'S DESIGNER BOUTIQUE (Since 2010)\nS.C.O 10-11, star bucks lane HLP sector 62, phase 8, Mohali"), "KAUR'S DESIGNER BOUTIQUE (Since 2010)"],
+    [aboutFrom("𝗔𝗳𝗳𝗼𝗿𝗱𝗮𝗯𝗹𝗲 𝗟𝘂𝘅𝘂𝗿𝘆"), "Affordable Luxury"],
+    [nameFrom("Very beautiful zardozi embroidery on a stunning velvet dupatta for brides", "Dupattas", "apparel"), "Zardozi Embroidery on a Stunning Velvet Dupatta"],
+    [nameFrom("HomeDecor HandmadeDecor IndianHandicrafts PujaDecor", "Decor", "handicrafts"), "Decor Piece"],
+    [nameFrom("peacock embroidery and an elegant centre", "Decor", "handicrafts"), "Peacock Embroidery and an Elegant Centre"],
+    [categoryOf("Handmade Premium Table Runner with 4 Tea Light", "handicrafts"), "Textiles"],
     [categoryOf("beautiful oxidised jhumkas for festive", "jewellery"), "Earrings"],
     [site({ externalUrl: "https://linktr.ee/shop" }), false],
     [site({ externalUrl: "https://mystore.in" }), true],
