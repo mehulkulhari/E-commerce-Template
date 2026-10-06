@@ -177,6 +177,14 @@ function list({ onlyNew = false } = {}) {
   }
 }
 
+/** Run `fn` over `items` with at most `n` in flight. */
+async function pool(items, n, fn) {
+  let i = 0;
+  await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => {
+    while (i < items.length) await fn(items[i++]);
+  }));
+}
+
 const slugFor = (u) => `${u.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "shop"}-${crypto.randomBytes(3).toString("hex")}`;
 
 async function buildOne(sb, rec) {
@@ -199,15 +207,18 @@ async function buildOne(sb, rec) {
       logo = await uploadImage(sb, BUCKET, `${slug}/logo-${hash(img.data)}.webp`, img);
     } catch (e) { say.dim(`    logo skipped (${e.message})`); }
   }
+  // Download, convert and upload every photo, 6 at a time.
+  const jobs = products.flatMap((p) => p.imageUrls.map((url, k) => ({ p, k, url })));
+  const done = new Map();
+  await pool(jobs, 6, async ({ p, k, url }) => {
+    try {
+      const img = await optimise(await download(url), 1200);
+      done.set(`${p.n}:${k}`, await uploadImage(sb, BUCKET, `${slug}/p${p.n}-${k + 1}-${hash(img.data)}.webp`, img));
+    } catch (e) { say.dim(`    photo ${p.n}.${k + 1} skipped (${e.message})`); }
+  });
   const specProducts = [];
   for (const p of products) {
-    const images = [];
-    for (const [k, url] of p.imageUrls.entries()) {
-      try {
-        const img = await optimise(await download(url), 1200);
-        images.push(await uploadImage(sb, BUCKET, `${slug}/p${p.n}-${k + 1}-${hash(img.data)}.webp`, img));
-      } catch (e) { say.dim(`    photo ${p.n}.${k + 1} skipped (${e.message})`); }
-    }
+    const images = p.imageUrls.map((_, k) => done.get(`${p.n}:${k}`)).filter(Boolean);
     if (!images.length) continue;
     specProducts.push({
       id: `p${p.n}`, n: specProducts.length + 1, name: p.name, category: p.category,
