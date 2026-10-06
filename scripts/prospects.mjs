@@ -17,7 +17,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { args, die, download, hash, need, optimise, readJson, ROOT, say, supabase, uploadImage, writeJson } from "./lib/common.mjs";
-import { aboutFrom, brandFrom, classify, clean, hasOwnWebsite, linksOf, productsFrom } from "./lib/extract.mjs";
+import { aboutFrom, brandFrom, cityFrom, classify, clean, hasOwnWebsite, linksOf, productsFrom, sellerProblems } from "./lib/extract.mjs";
 
 const DIR = path.join(ROOT, "prospects");
 const DB_FILE = path.join(DIR, "candidates.json");
@@ -25,6 +25,11 @@ const BASE_URL = (process.env.DEMO_BASE_URL || "https://e-commerce-template-tawn
 const SIGNATURE = process.env.AGENCY_SIGNATURE || "Mehul, DM to Store";
 const BUCKET = "demo-images";
 const STALE_MS = 2 * 24 * 3600e3; // Instagram image links expire; refetch older profiles
+
+// Northwest India + Delhi. Override with --cities "A,B" and --terms "x,y".
+const NW_CITIES = ["Delhi", "Jaipur", "Jodhpur", "Udaipur", "Ajmer", "Bikaner", "Kota", "Ahmedabad", "Surat", "Vadodara",
+  "Rajkot", "Chandigarh", "Ludhiana", "Amritsar", "Jalandhar", "Gurgaon", "Gurugram", "Noida", "Faridabad"];
+const TERMS = ["boutique", "kurtis online", "artificial jewellery", "imitation jewellery", "handicrafts", "handmade decor"];
 
 const a = args();
 const cmd = a._[0];
@@ -66,6 +71,7 @@ function qualify(profile, opts) {
   if ((profile.followersCount ?? 0) > max) why.push(`${profile.followersCount} followers (too big)`);
   if (!genre) why.push("couldn't tell apparel / jewellery / handicrafts");
   if (posts.length < 4) why.push(`only ${posts.length} posts with photos`);
+  if (genre) why.push(...sellerProblems(profile, genre));
   return { ok: why.length === 0, why, genre, score: cls.score };
 }
 
@@ -81,7 +87,8 @@ function remember(db, profile, opts) {
     genre: prev.genreLocked ? prev.genre : q.genre,
     followers: profile.followersCount ?? null,
     links: linksOf(profile),
-    city: opts.city ?? prev.city ?? profile.city ?? null,
+    city: cityFrom(opts.cities ?? NW_CITIES, profile.searchTerm) ?? opts.city ?? prev.city
+      ?? cityFrom(opts.cities ?? NW_CITIES, profile.biography, profile.fullName) ?? null,
     qualified: q.ok,
     reason: q.why.join("; ") || null,
     status: prev.status ?? (q.ok ? "new" : "skipped"),
@@ -100,12 +107,24 @@ function remember(db, profile, opts) {
 
 /* ── Commands ──────────────────────────────────────────────────────── */
 async function discover() {
-  const search = a.search;
-  if (!search || search === true) die('Give keywords: --search "jodhpur boutique, jodhpur jewellery"');
+  const cities = typeof a.cities === "string" ? a.cities.split(",").map((x) => x.trim()).filter(Boolean) : NW_CITIES;
+  const terms = typeof a.terms === "string" ? a.terms.split(",").map((x) => x.trim()).filter(Boolean) : TERMS;
+  const search = typeof a.search === "string" ? a.search : cities.flatMap((c) => terms.map((t) => `${c} ${t}`)).join(", ");
   const limit = Math.min(Number(a.limit ?? 40), 250);
-  say.bold(`Searching Instagram for: ${search} (up to ${limit} per keyword)…`);
-  let found = await apify("apify~instagram-search-scraper", { search, searchType: "user", searchLimit: limit });
-  found = found.filter((p) => p.username);
+  say.bold(`Searching Instagram: ${search.split(",").length} keywords, up to ${limit} accounts each…`);
+  // Search in batches so each Apify call finishes inside its 5-minute sync window.
+  const keywords = search.split(",").map((x) => x.trim()).filter(Boolean);
+  const seen = new Set();
+  let found = [];
+  for (let i = 0; i < keywords.length; i += 10) {
+    const batch = keywords.slice(i, i + 10);
+    say.dim(`  batch ${i / 10 + 1}/${Math.ceil(keywords.length / 10)}: ${batch.join(", ")}`);
+    const got = await apify("apify~instagram-search-scraper", { search: batch.join(", "), searchType: "user", searchLimit: limit });
+    for (const p of got) {
+      const u = String(p.username ?? "").toLowerCase();
+      if (u && !seen.has(u)) { seen.add(u); found.push(p); }
+    }
+  }
   // Search results sometimes lack posts; fetch full profiles for those.
   const thin = found.filter((p) => !p.latestPosts?.length && !p.private).map((p) => p.username);
   if (thin.length) {
@@ -118,7 +137,7 @@ async function discover() {
   let fresh = 0, good = 0;
   for (const p of found) {
     const had = Boolean(db[String(p.username).toLowerCase()]);
-    const rec = remember(db, p, { city: a.city, min: a.min, max: a.max, genre: a.genre });
+    const rec = remember(db, p, { city: a.city, cities, min: a.min, max: a.max, genre: a.genre });
     if (!rec) continue;
     if (!had) fresh++;
     if (rec.qualified) good++;
@@ -290,7 +309,7 @@ async function remove() {
 }
 
 async function selfTest() {
-  const { pricesFrom, nameFrom, categoryOf, hasOwnWebsite: site, classify: cls } = await import("./lib/extract.mjs");
+  const { pricesFrom, nameFrom, categoryOf, hasOwnWebsite: site, classify: cls, sellerProblems: sp } = await import("./lib/extract.mjs");
   const cases = [
     [pricesFrom("New kurti set ✨ Price: ₹1,299 only"), { price: 1299 }],
     [pricesFrom("MRP 1999 offer price Rs. 1499/-"), { price: 1499, mrp: 1999 }],
@@ -305,6 +324,13 @@ async function selfTest() {
     [cls({ fullName: "Glam Jewels", biography: "Oxidised & artificial jewellery, earrings" }).genre, "jewellery"],
     [cls({ fullName: "Mitti Crafts", biography: "Handmade terracotta pottery & home decor" }).genre, "handicrafts"],
     [clean("Hello 🌸 #newarrival @shop world"), "Hello world"],
+    [sp({ fullName: "BBQ Boutique", biography: "FINE DINING WITH GRILL-ICIOUS CUISINE" }, "apparel").includes("not a product seller (services / food / venue)"), true],
+    [sp({ biography: "Casting jewellery job work. B2B only." }, "jewellery").includes("B2B / wholesale only"), true],
+    [sp({ biography: "Manufacturer of all type of gold(22ct) and silver ornaments. Whatsapp 97xx" }, "jewellery").includes("fine gold/silver jeweller, not artificial jewellery"), true],
+    [sp({ biography: "Oxidised & artificial jewellery | DM to order | COD" }, "jewellery"), []],
+    [sp({ biography: "Kurtis & co-ords, all over India delivery" }, "apparel"), []],
+    [sp({ biography: "Just my art and life" }, "handicrafts"), ["no sign of selling (no order / price / delivery mentions)"]],
+    [cityFrom(["Delhi", "Jaipur"], "jaipur artificial jewellery"), "Jaipur"],
   ];
   let bad = 0;
   for (const [got, want] of cases) {

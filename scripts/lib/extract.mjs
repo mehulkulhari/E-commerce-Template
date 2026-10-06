@@ -37,6 +37,32 @@ export function classify(profile) {
   return { genre: score >= 2 ? genre : null, score, scores };
 }
 
+/* Who we pitch: anyone selling apparel, handicrafts or ARTIFICIAL jewellery
+   online through Instagram (a physical shop is not required), without a site. */
+const NOT_A_SELLER = /\b(restaurants?|caf[eé]s?|cuisine|dining|food|bakery|bakers|cakes?|hotels?|homestay|resort|salon|spa|makeup artist|mua\b|photograph(y|er)|wedding planner|event planner|decorators?|interior designer|architects?|real estate|academy|classes|coaching|tutor)\b/i;
+const B2B_ONLY = /\b(b2b|wholesale only|wholesalers? only|resellers? only|retailers? only|job ?work|bulk only)\b/i;
+const FINE_JEWELLERY = /\b(22 ?k(t|arat)?|22 ?ct|18 ?k(t|arat)?|hallmark(ed)?|bis\b|diamond jewell?e?ry|gold jewell?ers?|solitaires?|certified diamonds?|jadau|925|92\.5|sterling|pure silver|real silver|silver jewell?e?ry)\b/i;
+const ARTIFICIAL = /\b(artificial|imitation|oxidi[sz]ed|fashion jewell?e?ry|american diamond|\bad\b|kundan|polki|anti[- ]?tarnish|gold[- ]plated|silver[- ]plated|plated|rental|for rent|costume|stainless|western jewell?e?ry|korean)\b/i;
+const SELLS = /(dm (to|for) (order|price|details)|dm us|order now|orders? (open|accepted|booking)|shipping|delivery|deliver|\bcod\b|cash on delivery|price|₹|\brs\.? ?\d|whats ?app|buy|shop now|available|book (now|yours)|online|pan[- ]?india|all over india|dispatch|in stock|sale\b)/i;
+
+/** Reasons this account isn't a fit (empty = fine). */
+export function sellerProblems(profile, genre) {
+  const bio = `${profile.fullName ?? ""} ${profile.biography ?? ""} ${profile.businessCategoryName ?? ""}`;
+  const captions = (profile.latestPosts ?? []).map((p) => p.caption ?? "").join(" \n ");
+  const why = [];
+  if (NOT_A_SELLER.test(bio)) why.push("not a product seller (services / food / venue)");
+  if (B2B_ONLY.test(bio)) why.push("B2B / wholesale only");
+  if (genre === "jewellery" && FINE_JEWELLERY.test(bio) && !ARTIFICIAL.test(`${bio} ${captions}`)) why.push("fine gold/silver jeweller, not artificial jewellery");
+  if (!SELLS.test(`${bio} ${captions}`)) why.push("no sign of selling (no order / price / delivery mentions)");
+  return why;
+}
+
+/** City for an account: from the search term that found it, else its bio. */
+export function cityFrom(cities, ...texts) {
+  const hay = texts.filter(Boolean).join(" ").toLowerCase();
+  return cities.find((c) => new RegExp(`\\b${c.toLowerCase()}\\b`).test(hay)) ?? null;
+}
+
 // Link-in-bio hubs, chat links, socials and marketplaces are not an own website.
 const NOT_A_SITE = /(^|\.)(linktr\.ee|linkin\.bio|beacons\.ai|bio\.link|bio\.site|taplink\.cc|lnk\.bio|campsite\.bio|msha\.ke|solo\.to|wa\.me|whatsapp\.com|wa\.link|instagram\.com|facebook\.com|fb\.me|fb\.com|youtube\.com|youtu\.be|threads\.net|bit\.ly|tinyurl\.com|cutt\.ly|forms\.gle|docs\.google\.com|google\.com|g\.page|goo\.gl|maps\.app\.goo\.gl|t\.me|telegram\.me|meesho\.com|amazon\.in|amzn\.to|flipkart\.com|myntra\.com|etsy\.com|ajio\.com|nykaa\.com|jiomart\.com)$/i;
 

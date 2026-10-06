@@ -1,0 +1,232 @@
+{
+  "handicrafts": {
+    "1": [
+      {
+        "src": "/samples/handicrafts/1.webp",
+        "width": 1400,
+        "height": 934,
+        "blur": "data:image/webp;base64,UklGRjAAAABXRUJQVlA4ICQAAABwAQCdASoQAAsAA4BaJZwC7AFAAAD+8RcNX11XPNgGnCQ8IAA="
+      }
+    ],
+    "2": [
+      {
+        "src": "/samples/handicrafts/2.webp",
+        "width": 933,
+        "height": 1400,
+        "blur": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAADQAQCdASoLABAAA4BaJbACdAD0cNc1AAD+y77ycjgLPLKZYfqYFKbbpYbXVRndJ+oAH2LUeiZoV5rjcrLr/UB71/NJIAAA"
+      }
+    ],
+    "3": [
+      {
+        "src": "/samples/handicrafts/3.webp",
+        "width": 1400,
+        "height": 937,
+        "blur": "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAADwAQCdASoQAAsAA4BaJYwCdAEPDrCoarAA/vDUbm3WPBv2XQrrqFfhAxlFa7JmvJZatdpofpSCmqWRPIAAAA=="
+      }
+    ],
+    "4": [
+      {
+        "src": "/samples/handicrafts/4.webp",
+        "width": 1400,
+        "height": 1051,
+        "blur": "data:image/webp;base64,UklGRm4AAABXRUJQVlA4IGIAAABQAgCdASoQAAwAA4BaJbACdAYrTwNMcMIN+YAA/mFP20jkDXSBZ4twPSx5ItXYANAMh/XdKGceXIgmiDMUTGokoccwMx8yrbvdjMxb5UHc9GODBC3//r1pbztAs7VswZgAAA=="
+      }
+    ],
+    "5": [
+      {
+        "src": "/samples/handicrafts/5.webp",
+        "width": 1400,
+        "height": 934,
+        "blur": "data:image/webp;base64,UklGRkAAAABXRUJQVlA4IDQAAAAQAgCdASoQAAsAA4BaJYwC7AD6mirUhwxwAP7nPwIqUI7xN3xM8/lDSucyWUlOznqxroAA"
+      }
+    ],
+    "6": [
+      {
+        "src": "/samples/handicrafts/6.webp",
+        "width": 1400,
+        "height": 788,
+        "blur": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAAAQAgCdASoQAAkAA4BaJZgCdADw1hKEwpMAAP74VnF0cCVTK/AvcspimDNXjwBzqkHhRgZLjBbc4jjrJSFBphKK/VL0+LVP9D/ngAAA"
+      }
+    ],
+    "7": [
+      {
+        "src": "/samples/handicrafts/7.webp",
+        "width": 1050,
+        "height": 1400,
+        "blur": "data:image/webp;base64,UklGRkQAAABXRUJQVlA4IDgAAABwAQCdASoMABAAA4BaJZACdAAAAAD3Qkawaaxb7rQrKzDgBJPYpw86DHjFO21KjmgAAyZpMHAAAA=="
+      }
+    ],
+    "8": [
+      {
+        "src": "/samples/handicrafts/8.webp",
+        "width": 1400,
+        "height": 934,
+        "blur": "data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAADwAQCdASoQAAsAA4BaJbACdADw2jjILHQA/vi573+mH2Yhjo+44aKaeoKXg8uFuvk8zO69Yl1oxbOUcsjwkAAA"
+      }
+    ],
+    "9": [
+      {
+        "src": "/samples/handicrafts/9.webp",
+        "width": 933,
+        "height": 1400,
+        "blur": "data:image/webp;base64,UklGRm4AAABXRUJQVlA4IGIAAAAQAgCdASoLABAAA4BaJQBOgCHfG02fTHAAAP7Knfn1EnANtoY8+BAccSB7G8hBl9JaN7IiNNp0ReCYTApLsm/ds/Hp4Bcdf/SDxpIQSwdjlNTM3cG01fdDIDel0x/CsICAAA=="
+      }
+    ],
+    "10": [
+      {
+        "src": "/samples/handicrafts/10.webp",
+        "width": 934,
+        "height": 1400,
+        "blur": "data:image/webp;base64,UklGRn4AAABXRUJQVlA4IHIAAABQAgCdASoLABAAA4BaJaACdAYvrvt5KOpdmDAA/on88YzUp7M8xGAJ4XXlJOTqP5pv8pizE/A50ys8HhE2MmLRXBLxMEvokcvUVBr7Sn6PVrCeiwitPCUeJq4pqVUNzUoKsIZg9ZuVmq2TN1vk+QQiAAA="
+      }
+    ],
+    "11": [
+      {
+        "src": "/samples/handicrafts/11.webp",
+        "width": 933,
+        "height": 1400,
+        "blur": "data:image/webp;base64,UklGRnIAAABXRUJQVlA4IGYAAABQAgCdASoLABAAA4BaJQBdj+AC9YmI/WDUIYAA/qN+n0miJc2/s8FkfW3vf9clFeQTDkDiCVZvJpj5KYe8pud70L55G/0P0lDfeHm4TD6T0VxLDGwwMM7yuQ6LVF8b3jOASQpAAAA="
+      }
+    ],
+    "12": [
+      {
+        "src": "/samples/handicrafts/12.webp",
+        "width": 933,
+        "height": 1400,
+        "blur": "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAAAQAgCdASoLABAAA4BaJbACdAEf2rzz8i4AAP7SovvSuMOKXE1EtAKTGQ4lDTrHEQugICXXdovDdmwQSBdyyeQa6g6S6K5acL8Qk+SQnG3u0EmR3pOqU3cLAAA="
+      }
+    ]
+  },
+  "jewellery": {
+    "1": [
+      {
+        "src": "/samples/jewellery/1.webp",
+        "width": 1400,
+        "height": 1400,
+        "blur": "data:image/webp;base64,UklGRogAAABXRUJQVlA4IHwAAABQAgCdASoQABAAA4BaJZwAD4fvPMBW7yywsMAA/uXYnWNpd/6fuGDVesXKRvas5JbMAaLlay0oh7jf5Sw5dlYOY1pdpIbTVVTdWnSRuiW8VxDp26djddlqfecut1VPqH3SH/eX5Dot4R+QI9lo09rn8JCUgFSDrQOdmmAA"
+      },
+      {
+        "src": "/samples/jewellery/1-model.webp",
+        "width": 931,
+        "height": 1400,
+        "blur": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAAAQAgCdASoLABAAA4BaJagCdAELZQT6w1UgAP71eVvbCP6h8SLPWU6eUy5UUelwASWo2fTugTP4Z5HLj+L49N9wx7SeCYnkDBfQ/s+iAAA=",
+        "model": true
+      }
+    ],
+    "2": [
+      {
+        "src": "/samples/jewellery/2.webp",
+        "width": 1290,
+        "height": 1400,
+        "blur": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAACwAQCdASoPABAAA4BaJYwAAuZNBcAAAP72Bg0C5O5OTOofyugseF1fBXa8nh5hgcArCrMMGS9/PMSEgZG97AcAAAA="
+      },
+      {
+        "src": "/samples/jewellery/2-model.webp",
+        "width": 1400,
+        "height": 934,
+        "blur": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAADQAQCdASoQAAsAA4BaJagCdACjD1lkAAD+6g6ai5Q4wjb3yfzqpg+2fkedRZ5YtyVOVDyML2ni+0XMJvxhZOIy7Z4843oRgb7728OZ60VOgAAA",
+        "model": true
+      }
+    ],
+    "3": [
+      {
+        "src": "/samples/jewellery/3.webp",
+        "width": 1400,
+        "height": 934,
+        "blur": "data:image/webp;base64,UklGRkQAAABXRUJQVlA4IDgAAACwAQCdASoQAAsAA4BaJZwAAuQahGBIAP7uH9Yq83RryCOUmNrr6mWvW5cYn7W/uRVqRLVkMP4gAA=="
+      }
+    ],
+    "4": [
+      {
+        "src": "/samples/jewellery/4.webp",
+        "width": 1400,
+        "height": 934,
+        "blur": "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAADQAQCdASoQAAsAA4BaJaQAAtz1e1s+AAD+9CqgekC+wIsqwNiSiMpSJ7SeEGrbwnQAAA=="
+      }
+    ],
+    "5": [
+      {
+        "src": "/samples/jewellery/5.webp",
+        "width": 1120,
+        "height": 1400,
+        "blur": "data:image/webp;base64,UklGRjYAAABXRUJQVlA4ICoAAACQAQCdASoNABAAA4BaJZwAAt8Y7IAA/t6eFm73SNdUyXbAd4pH7mFAAAA="
+      },
+      {
+        "src": "/samples/jewellery/5-model.webp",
+        "width": 1400,
+        "height": 934,
+        "blur": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAACwAQCdASoQAAsAA4BaJZwAAcDE60IAAP7x4On/GLmNnKn3sTesJ9SK8bWeB9vtUZdHT4rP6i0w8kYB46Dusr9tlF5c/liEKApgAA==",
+        "model": true
+      }
+    ],
+    "6": [
+      {
+        "src": "/samples/jewellery/6.webp",
+        "width": 1400,
+        "height": 928,
+        "blur": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAADwAQCdASoQAAsAA4BaJaQAD4WuyfKQsigA/vX5k/dGS6+28mjn+jmPmpw7PYSfD75tbLlNAHY5oHWiZlm2847SP9RBlrAzCL9hLYAA"
+      }
+    ],
+    "7": [
+      {
+        "src": "/samples/jewellery/7.webp",
+        "width": 1400,
+        "height": 934,
+        "blur": "data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAABQAgCdASoQAAsAA4BaJaACdAD8XLj2GCg1JqAA/rQAb1jveII1l51uENr6YeSO4mh/xvvksm6of515Z+h0iQgRCRrFvxmHM30n9syLPEmrP10s2y5ucYEFw2e9hz36Cg44oAAA"
+      },
+      {
+        "src": "/samples/jewellery/7-model.webp",
+        "width": 933,
+        "height": 1400,
+        "blur": "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAADQAQCdASoLABAAA4BaJQBOgBdGb+u4AAD9Ssj+/K2us+HxKk/zKQ5EK2wfNF2owkQnhnPH5StWcphlMkGZnt5W0rD0U18cG2UeuA4fq0qXucfWVHsRKQ173wxYCYwAAAA=",
+        "model": true
+      }
+    ],
+    "8": [
+      {
+        "src": "/samples/jewellery/8.webp",
+        "width": 1400,
+        "height": 935,
+        "blur": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAADQAQCdASoQAAsAA4BaJZACdACu6axFAADNbrr4P2llQ6/YZhsx+FWvIA6szMOPiYtpNYCaSppJtlZ3sUgMKamc1CQ0eUlORWJYgpnVJdpbWLa1ZAAAAA=="
+      }
+    ],
+    "9": [
+      {
+        "src": "/samples/jewellery/9.webp",
+        "width": 1400,
+        "height": 681,
+        "blur": "data:image/webp;base64,UklGRkIAAABXRUJQVlA4IDYAAADwAQCdASoQAAgAA4BaJZQCw7ERB98QcYAA/vSo6kBsyy2UKJ7bOXQMFCvziDU4r88cOr4AAAA="
+      },
+      {
+        "src": "/samples/jewellery/9-model.webp",
+        "width": 1400,
+        "height": 934,
+        "blur": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAACwAQCdASoQAAsAA4BaJaQAAhcpBmPgAP6NewvXWZuZydyeKci/IVP7maYgtJKP2rQgJsB0DaH3YAHAGg5eG8EfgAA=",
+        "model": true
+      }
+    ],
+    "10": [
+      {
+        "src": "/samples/jewellery/10.webp",
+        "width": 934,
+        "height": 1400,
+        "blur": "data:image/webp;base64,UklGRkQAAABXRUJQVlA4IDgAAACQAQCdASoLABAAA4BaJYwAAuUuecAA/uwIK93QwnU5rmfljj0wSIuohhGx5yERwSmNQ3r99u8QAA=="
+      },
+      {
+        "src": "/samples/jewellery/10-model.webp",
+        "width": 933,
+        "height": 1400,
+        "blur": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAADQAQCdASoLABAAA4BaJZACdADbX5csAAD9UOHFIWGqaXHyR3akIw2YxBmfTVqu1l6rtgTxV4+kmnMs6u+UFcm49GmpTc6IAAA=",
+        "model": true
+      }
+    ],
+    "11": [
+      {
+        "src": "/samples/jewellery/11.webp",
+        "width": 1050,
+        "height": 1400,
+        "blur": "data:image/webp;base64,UklGRjYAAABXRUJQVlA4ICoAAACwAQCdASoMABAAA4BaJaQAAudaXCygAP74rQu2w4lKv3HLUudij8cAAAA="
+      }
+    ]
+  }
+}
