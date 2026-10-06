@@ -11,6 +11,7 @@ export function clean(s = "") {
     .replace(/https?:\/\/\S+/g, " ")
     .replace(/[#@][\p{L}\p{N}_.]+/gu, " ")
     .replace(/[|•·★☆✦✧❤♥]+/g, " ")
+    .replace(/[*~]+/g, " ")
     .replace(/[ \t]+/g, " ")
     .trim();
 }
@@ -81,17 +82,22 @@ export function hasOwnWebsite(profile) {
   });
 }
 
+
 const CATEGORIES = {
   apparel: [
-    ["Sarees", /\bsar(ee|i)s?\b/i], ["Lehengas", /lehe?n?ga/i], ["Kurtis & Kurtas", /kurt[ia]s?\b/i],
+    ["Rajputi Poshak", /poshak|\bbaju\b|odhn[ai]|rajputi|kanchli/i],
+    ["Lehengas", /lehe?n?ga/i], ["Sarees", /\bsar(ee|i)s?\b/i], ["Kurtis & Kurtas", /kurt[ia]s?\b/i],
     ["Suit Sets", /\bsuits?\b|salwar|anarkali|sharara|palazzo|gharara/i], ["Co-ord Sets", /co-?ords?/i],
     ["Dresses", /\bdress(es)?\b|gowns?|maxi/i], ["Dupattas", /dupattas?|stoles?/i],
     ["Tops & Shirts", /\btops?\b|blouses?|shirts?|\btees?\b|t-shirts?/i], ["Bottoms", /jeans|trousers?|pants|skirts?/i],
+    ["Bridal Wear", /bridal|\bbride\b|wedding wear/i],
   ],
   jewellery: [
-    ["Earrings", /earrings?|jhumk|studs?|hoops?|chandbali|danglers?/i], ["Necklaces", /necklaces?|chokers?|pendants?|\bchains?\b|mala|\bhaar\b/i],
+    ["Necklaces", /necklaces?|neck ?pieces?|chokers?|pendants?|\bchains?\b|mala|\bhaar\b/i],
+    ["Earrings", /earrings?|jhumk|studs?|hoops?|chandbali|danglers?/i],
     ["Bangles & Bracelets", /bangles?|bracelets?|kadas?|kangan/i], ["Rings", /\brings?\b/i], ["Anklets", /anklets?|payal/i],
     ["Maang Tikka", /tikka|maang/i], ["Nose Pins", /nose ?pins?|\bnath\b/i],
+    ["Jewellery Sets", /\bsets?\b|combo/i], ["Bridal Jewellery", /bridal/i],
   ],
   handicrafts: [
     ["Lamps & Lighting", /lamps?|lights?|lanterns?|lampshades?/i], ["Baskets & Trays", /baskets?|trays?|hampers?/i],
@@ -105,10 +111,13 @@ export function categoryOf(text, genre) {
   return "New Arrivals";
 }
 
-/** Price (and MRP, if a higher "was" price is given) from a caption. */
+/** Price (and MRP, if a higher "was" price is given) from a caption.
+    Understands "₹1,299", "Rs. 1299/-", "Price: 899" and "90 Rs" / "450/-". */
 export function pricesFrom(caption = "") {
-  const re = /(?:₹|\brs\.?|\binr|\bprice\s*[:\-–]?\s*(?:₹|rs\.?)?|\bmrp\s*[:\-–]?\s*(?:₹|rs\.?)?|\@\s*)\s*([\d][\d,]{1,7})(?:\.\d+)?\s*(?:\/-)?/gi;
-  const nums = [...caption.matchAll(re)].map((m) => Number(m[1].replace(/,/g, ""))).filter((n) => n >= 49 && n <= 300000);
+  const before = /(?:₹|\brs\.?|\binr|\bprice\s*[:\-–]?\s*(?:₹|rs\.?)?|\bmrp\s*[:\-–]?\s*(?:₹|rs\.?)?|\@\s*)\s*([\d][\d,]{1,7})(?:\.\d+)?\s*(?:\/-)?/gi;
+  const after = /\b(\d[\d,]{1,6})\s*(?:\/-|rs\b\.?|₹|inr\b|rupees\b)/gi;
+  const nums = [...caption.matchAll(before), ...caption.matchAll(after)]
+    .map((m) => Number(m[1].replace(/,/g, ""))).filter((n) => n >= 49 && n <= 300000);
   if (!nums.length) return {};
   const price = Math.min(...nums);
   const top = Math.max(...nums);
@@ -117,19 +126,65 @@ export function pricesFrom(caption = "") {
 
 const SKIP_LINE = /^(dm|price|prices|order|orders|available|link|whatsapp|call|book|booking|shop now|rs\.?|₹|inr|mrp|size|sizes|fabric|colou?r|ship|shipping|cod|free|new arrivals?|swipe|follow|tag|comment|save|share)\b/i;
 const NON_PRODUCT = /(giveaway|winner|announcement|we are closed|holiday|happy (diwali|holi|new year|dussehra|navratri|independence|republic|raksha)|customer (review|feedback)|testimonial|thank you for|behind the scenes|hiring|vacancy)/i;
+// Romanised Hindi chit-chat ("ye color pehnte hi sab puchenge") isn't a product name.
+const HINGLISH = /\b(ke|ki|ka|liye|apne|apni|aap|hai|hain|sab|se|ko|mein|ye|yeh|bhi|nahi|kya|karo|kare|banwaye|wale|wali|jaata|jata|hota|sirf|har|aur|hi|pe|par)\b/gi;
+const PRICE_BITS = /(₹|\brs\.?|\binr)\s*\d[\d,]*(\s*\/-)?|\b\d[\d,]*\s*(\/-|rs\b\.?|₹|inr\b|rupees\b)/gi;
+const TRAILING_FILLER = /(\s+|^)(for|with|your|and|the|of|in|to|a|an|by|at|&|on)\s*$/i;
 
 const titleCase = (s) => s.toLowerCase().replace(/(^|[\s(/&-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
 
-/** A short product name from the caption, or a fallback like "Earrings 3". */
-export function nameFrom(caption, category, n) {
-  const lines = String(caption ?? "").split(/\n|[.!?](?=\s)/).map(clean).filter(Boolean);
-  let line = lines.find((l) => l.length >= 4 && /\p{L}{3}/u.test(l) && !SKIP_LINE.test(l) && !/\d{5,}/.test(l));
-  if (!line) return `${category === "New Arrivals" ? "Piece" : category.replace(/s$/, "")} ${n}`;
-  line = line.replace(/\s*[:\-–,]+\s*$/, "").replace(/^[\s:\-–,*]+/, "");
-  if (line.length > 52) line = line.slice(0, 52).replace(/\s+\S*$/, "");
+const SINGULAR = {
+  "Rajputi Poshak": "Rajputi Poshak", Lehengas: "Lehenga", Sarees: "Saree", "Kurtis & Kurtas": "Kurti", "Suit Sets": "Suit Set",
+  "Co-ord Sets": "Co-ord Set", Dresses: "Dress", Dupattas: "Dupatta", "Tops & Shirts": "Top", Bottoms: "Bottom Wear", "Bridal Wear": "Bridal Outfit",
+  Earrings: "Earrings", Necklaces: "Necklace", "Bangles & Bracelets": "Bangles", Rings: "Ring", Anklets: "Anklets", "Maang Tikka": "Maang Tikka",
+  "Nose Pins": "Nose Pin", "Jewellery Sets": "Jewellery Set", "Bridal Jewellery": "Bridal Set",
+  "Lamps & Lighting": "Lamp", "Baskets & Trays": "Basket", Planters: "Planter", "Wall Decor": "Wall Hanging", Pottery: "Pottery Piece",
+  Textiles: "Handloom Textile", Bags: "Bag", "Candles & Diyas": "Diya Set", Decor: "Decor Piece",
+};
+// What to call a piece whose caption says nothing about it.
+const UNNAMED = { apparel: "Look", jewellery: "Design", handicrafts: "Piece" };
+const MATERIAL_WORDS = /\b(cotton|silk|georgette|chiffon|rayon|linen|velvet|organza|chanderi|banarasi|bandhej|bandhani|leheriya|gota|zari|embroider(ed|y)|block ?print(ed)?|kundan|polki|oxidi[sz]ed|pearls?|meenakari|temple|american diamond|bamboo|cane|jute|rattan|wicker|seagrass|terracotta|brass|wooden|macrame|handwoven|hand-?painted)\b/i;
+const COLOUR = /\b(red|maroon|rani|pink|peach|orange|yellow|mustard|haldi|green|mint|teal|blue|navy|purple|lavender|wine|white|ivory|cream|black|grey|golden|gold|silver|beige|brown|rust|magenta|multicolou?r)\b/i;
+const FILLER = [
+  /\b(now )?available (now )?(at|in|on|with)\b.*$/i,
+  /\b(shop|order|dm|whats ?app|book) (now|us|for|to)\b.*$/i,
+  /\bnew arrivals?\b/gi, /\(?\bpart ?\d+\)?/gi, /^(introducing|presenting|meet|new)\s+/i,
+];
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const latinShare = (s) => (s.match(/[A-Za-z]/g) ?? []).length / Math.max(1, (s.match(/\p{L}/gu) ?? []).length);
+const productWord = (genre) => new RegExp([...(CATEGORIES[genre] ?? []).map(([, re]) => re.source), MATERIAL_WORDS.source].join("|"), "i");
+
+/** { name, generic }: a product name from the caption when a line actually
+    names a product (English preferred); otherwise colour + category
+    ("Orange Rajputi Poshak") or a plain "Look"/"Design"/"Piece" (generic). */
+export function nameInfo(caption, category, genre, brand) {
+  const brandRe = brand ? new RegExp(`\\b(at |by |from )?${escapeRe(brand)}\\b`, "ig") : null;
+  const segs = String(caption ?? "").split(/\n|[.!?|•](?=\s)|\s[—–-]\s|,\s/)
+    .map((x) => {
+      let t = clean(x).replace(PRICE_BITS, " ");
+      if (brandRe) t = t.replace(brandRe, " ");
+      for (const re of FILLER) t = t.replace(re, " ");
+      t = t.replace(/\s+/g, " ").replace(/^[\s:\-–,*&()]+|[\s:\-–,*&(]+$/g, "");
+      if (t.length > 52) t = t.slice(0, 52).replace(/\s+\S*$/, "");
+      for (let i = 0; i < 3; i++) t = t.replace(TRAILING_FILLER, "").trim();
+      return t;
+    })
+    .filter((t) => t.length >= 4 && /\p{L}{3}/u.test(t) && !SKIP_LINE.test(t) && !/\d{5,}/.test(t)
+      && latinShare(t) >= 0.6 && (t.match(HINGLISH) ?? []).length < 2);
+  let line = genre ? segs.find((t) => productWord(genre).test(t) && t.split(" ").length <= 9) : segs[0];
+  if (!line) {
+    const colour = String(caption ?? "").match(COLOUR)?.[1];
+    const noun = SINGULAR[category] ?? UNNAMED[genre] ?? "Piece";
+    return { name: titleCase(`${colour ? `${colour} ` : ""}${noun}`), generic: !colour || !SINGULAR[category] };
+  }
   if (line === line.toUpperCase() || line === line.toLowerCase()) line = titleCase(line);
-  return line;
+  // A one-word name ("Pearl") reads better with its category ("Pearl Earrings").
+  if (line.split(" ").length === 1 && SINGULAR[category] && !line.toLowerCase().includes(SINGULAR[category].toLowerCase())) {
+    line = `${line} ${SINGULAR[category]}`;
+  }
+  return { name: line, generic: false };
 }
+export const nameFrom = (caption, category, genre, brand) => nameInfo(caption, category, genre, brand).name;
 
 /** Short "about" text from the bio: drop contact lines, links and emojis. */
 export function aboutFrom(bio = "") {
@@ -151,8 +206,10 @@ export function imagesOf(post) {
   return [...new Set(urls)];
 }
 
-/** Products from the latest posts: one product per post, up to `max`. */
-export function productsFrom(posts = [], genre, max = 12) {
+/** Products from the latest posts: one product per post (photos before
+    reels), up to `max`. Unnamed pieces are numbered ("Look 01", "Look 02");
+    repeated real names become "…, Style 2". */
+export function productsFrom(posts = [], genre, max = 12, brand) {
   const out = [];
   const ordered = [...posts].sort((a, b) => Number(a.type === "Video") - Number(b.type === "Video"));
   for (const post of ordered) {
@@ -161,16 +218,44 @@ export function productsFrom(posts = [], genre, max = 12) {
     if (isNonProduct(caption)) continue;
     const imgs = imagesOf(post).slice(0, 3);
     if (!imgs.length) continue;
-    const n = out.length + 1;
-    const category = categoryOf(`${caption} ${(post.hashtags ?? []).join(" ")}`, genre);
+    let category = categoryOf(`${caption} ${(post.hashtags ?? []).join(" ")}`, genre);
+    const info = nameInfo(caption, category, genre, brand);
+    const fromName = categoryOf(info.name, genre); // the name is the best evidence of what it is
+    if (fromName !== "New Arrivals") category = fromName;
     const { price, mrp } = pricesFrom(caption);
-    out.push({ n, name: nameFrom(caption, category, n), category, price, mrp, imageUrls: imgs, postUrl: post.url });
+    out.push({ n: out.length + 1, name: info.name, generic: info.generic, category, price, mrp, imageUrls: imgs, postUrl: post.url });
+  }
+  const total = new Map();
+  for (const p of out) total.set(p.name.toLowerCase(), (total.get(p.name.toLowerCase()) ?? 0) + 1);
+  const seen = new Map();
+  for (const p of out) {
+    const key = p.name.toLowerCase();
+    const k = (seen.get(key) ?? 0) + 1;
+    seen.set(key, k);
+    if (p.generic && total.get(key) > 1) p.name = `${p.name} ${String(k).padStart(2, "0")}`;
+    else if (k > 1) p.name = `${p.name}, Style ${k}`;
+    delete p.generic;
   }
   return out;
 }
 
+const PLACE_SUFFIX = /\s+(jodhpur|jaipur|new delhi|delhi|udaipur|ajmer|bikaner|kota|ahmedabad|surat|vadodara|rajkot|chandigarh|ludhiana|amritsar|jalandhar|gurgaon|gurugram|noida|faridabad|rajasthan|india|official)\s*$/i;
+const tidyBrand = (s) => {
+  let name = s.replace(/[_]+/g, " ").replace(/\s+/g, " ").trim();
+  for (let i = 0; i < 3; i++) {
+    const t = name.replace(PLACE_SUFFIX, "").trim();
+    if (t.length >= 3) name = t;
+  }
+  if (name.length > 34) name = name.slice(0, 34).replace(/\s+\S*$/, "");
+  for (let i = 0; i < 3; i++) name = name.replace(TRAILING_FILLER, "").trim();
+  // SHOUTING words become Title Case; short acronyms (AD, SS) stay.
+  return name.split(" ").map((w) => (w.length > 2 && w === w.toUpperCase() && /\p{L}/u.test(w) ? titleCase(w) : w)).join(" ");
+};
+
+/** Shop name: the profile name without taglines, trailing city or "official";
+    falls back to the handle when the name isn't in English letters. */
 export function brandFrom(profile) {
-  const name = clean(profile.fullName ?? "").replace(/\s*[-–|:].*$/, "").trim();
-  if (name.length >= 2) return name.length > 34 ? name.slice(0, 34).replace(/\s+\S*$/, "") : name;
-  return titleCase(String(profile.username).replace(/[._]+/g, " ").trim());
+  const fromName = tidyBrand(clean(profile.fullName ?? "").replace(/\s*[-–|:].*$/, ""));
+  if (fromName.length >= 2 && latinShare(fromName) >= 0.6) return fromName;
+  return tidyBrand(titleCase(String(profile.username).replace(/[._]+/g, " ").trim()));
 }

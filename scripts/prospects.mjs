@@ -183,7 +183,12 @@ async function buildOne(sb, rec) {
   const genre = a.genre ?? rec.genre;
   if (!genre) { say.warn(`@${rec.username}: genre unknown — rerun with --genre apparel|jewellery|handicrafts`); return; }
   const slug = rec.slug ?? slugFor(rec.username);
-  const products = productsFrom(rec.profile.latestPosts, genre, Number(a.products ?? 12));
+  rec.brand = brandFrom(rec.profile);
+  if (rec.slug) { // rebuild: clear the previous photos first
+    const { data: old } = await sb.storage.from(BUCKET).list(slug, { limit: 200 });
+    if (old?.length) await sb.storage.from(BUCKET).remove(old.map((f) => `${slug}/${f.name}`));
+  }
+  const products = productsFrom(rec.profile.latestPosts, genre, Number(a.products ?? 12), rec.brand);
   if (products.length < 3) { say.warn(`@${rec.username}: only ${products.length} usable posts, skipped.`); return; }
 
   say.dim(`  @${rec.username}: ${products.length} products, uploading photos…`);
@@ -332,13 +337,27 @@ async function recheck() {
 }
 
 async function selfTest() {
-  const { pricesFrom, nameFrom, categoryOf, hasOwnWebsite: site, classify: cls, sellerProblems: sp } = await import("./lib/extract.mjs");
+  const { pricesFrom, nameFrom, categoryOf, brandFrom, hasOwnWebsite: site, classify: cls, sellerProblems: sp } = await import("./lib/extract.mjs");
   const cases = [
     [pricesFrom("New kurti set ✨ Price: ₹1,299 only"), { price: 1299 }],
     [pricesFrom("MRP 1999 offer price Rs. 1499/-"), { price: 1499, mrp: 1999 }],
     [pricesFrom("Order now! Call 9876543210"), {}],
-    [nameFrom("✨ GOLDEN KUNDAN CHOKER SET ✨\nPrice 899\n#jewellery", "Necklaces", 1), "Golden Kundan Choker Set"],
-    [nameFrom("DM to order 💌", "Earrings", 3), "Earring 3"],
+    [nameFrom("✨ GOLDEN KUNDAN CHOKER SET ✨\nPrice 899\n#jewellery", "Necklaces", "jewellery"), "Golden Kundan Choker Set"],
+    [nameFrom("Gents Accessories Available at Risala The Boutique Jodhpur . . . #rajputana", "New Arrivals", "apparel", "Risala The Boutique"), "Look"],
+    [nameFrom("Ye color pehnte hi sab puchenge – Kahan se liya? #orangeposhak", "Rajputi Poshak", "apparel"), "Rajputi Poshak"],
+    [nameFrom("✨ राजस्थानी पोशाक की शान — New Baju & Loom Collection (Part 2)! ✨", "Rajputi Poshak", "apparel"), "Baju & Loom Collection"],
+    [nameFrom("Beautiful pink georgette suit with gota work", "Suit Sets", "apparel"), "Beautiful pink georgette suit with gota work"],
+    [brandFrom({ fullName: "RISALA THE BOUTIQUE JODHPUR" }), "Risala The Boutique"],
+    [categoryOf("Bridal and Mirror loom collection #rajputiposhak", "apparel"), "Rajputi Poshak"],
+    [nameFrom("DM to order 💌", "Earrings", "jewellery"), "Earrings"],
+    [nameFrom("Oxidized Earrings 90 Rs", "Earrings", "jewellery"), "Oxidized Earrings"],
+    [pricesFrom("Oxidized Earrings 90 Rs"), { price: 90 }],
+    [nameFrom("Is Navratri apne Mandir ke liye banwaye **Custom Rajputi poshak", "Rajputi Poshak", "apparel"), "Rajputi Poshak"],
+    [nameFrom("Three-Gune Rajputi Poshak, crafted with beautiful gota", "Rajputi Poshak", "apparel"), "Three-Gune Rajputi Poshak"],
+    [brandFrom({ fullName: "Balotiya_Creation_Tailor_Boutique" }), "Balotiya Creation Tailor Boutique"],
+    [brandFrom({ fullName: "शिव", username: "_shiv_shakti_boutique_jodhpur" }), "Shiv Shakti Boutique"],
+    [brandFrom({ fullName: "SHAGUN IMITATION Jewellery & Rentals on Hire" }), "Shagun Imitation Jewellery"],
+    [categoryOf("Oxidized NeckPiece", "jewellery"), "Necklaces"],
     [categoryOf("beautiful oxidised jhumkas for festive", "jewellery"), "Earrings"],
     [site({ externalUrl: "https://linktr.ee/shop" }), false],
     [site({ externalUrl: "https://mystore.in" }), true],
