@@ -9,6 +9,7 @@
      npm run prospects -- status <handle> sent|replied|won|lost
      npm run prospects -- remove <handle>         (takes the preview link down)
      npm run prospects -- recheck [--apply]       (re-apply fit rules; --apply removes misfits)
+     npm run prospects -- sheet [handle]          (contact sheet of photos to eyeball)
      npm run prospects -- add <handle...>         (add shops you found yourself)
      npm run prospects -- test                    (check extraction, no network)
 
@@ -223,7 +224,7 @@ async function buildOne(sb, rec) {
     .map((p) => ({ p, shots: p.imageUrls.map((_, k) => ({ k, ...got.get(`${p.n}:${k}`) })).filter((s) => s.buf && s.verdict.keep) }))
     .filter((x) => x.shots.length);
   const junk = jobs.length - usable.reduce((s, x) => s + x.shots.length, 0);
-  const minProducts = Number(a["min-products"] ?? 6);
+  const minProducts = Number(a["min-products"] ?? 5);
   if (usable.length < minProducts) {
     // Not enough real product photos to make a preview worth sending.
     rec.qualified = false;
@@ -234,7 +235,9 @@ async function buildOne(sb, rec) {
     return;
   }
   // The strongest product photo leads (it becomes the hero); the rest keep Instagram order.
-  const bestAt = usable.reduce((bi, x, i, arr) => (x.shots[0].verdict.score > arr[bi].shots[0].verdict.score ? i : bi), 0);
+  // Rank by "product-ness", penalising any text overlay or person in frame.
+  const lead = (v) => v.score - 2 * (v.textish ?? 0) - (v.person ?? 0) - (v.words ? 0.5 : 0);
+  const bestAt = usable.reduce((bi, x, i, arr) => (lead(x.shots[0].verdict) > lead(arr[bi].shots[0].verdict) ? i : bi), 0);
   usable.unshift(...usable.splice(bestAt, 1));
 
   say.dim(`  @${rec.username}: ${usable.length} products (${junk} junk photo${junk === 1 ? "" : "s"} dropped), uploading…`);
@@ -284,11 +287,11 @@ async function buildOne(sb, rec) {
   };
   const { error } = await sb.from("demos").upsert({
     slug, genre, handle: rec.username, brand: rec.brand, spec, followers: rec.followers,
-    status: rec.status === "new" || rec.status === "skipped" ? "draft" : rec.status,
+    status: ["new", "skipped", "removed"].includes(rec.status) ? "draft" : rec.status,
   }, { onConflict: "slug" });
   if (error) throw new Error(`save demo: ${error.message}`);
 
-  Object.assign(rec, { slug, genre, status: rec.status === "new" || rec.status === "skipped" ? "draft" : rec.status, builtAt: new Date().toISOString() });
+  Object.assign(rec, { slug, genre, qualified: true, reason: null, status: ["new", "skipped", "removed"].includes(rec.status) ? "draft" : rec.status, builtAt: new Date().toISOString() });
   say.ok(`@${rec.username} → ${linkOf(slug)}  (${specProducts.length} products${specProducts.some((p) => p.price) ? "" : ", no prices found"})`);
 }
 
@@ -319,6 +322,7 @@ async function build() {
     try { await buildOne(sb, rec); } catch (e) { say.err(`@${h}: ${e.message}`); }
     save(db);
   }
+  if (vision) await vision.closeOcr();
   console.log("\nNext: npm run prospects -- export   (writes prospects/outreach.csv)");
 }
 
@@ -370,6 +374,43 @@ async function remove() {
   rec.status = "removed";
   save(db);
   say.ok(`Preview for @${h} taken down and its photos deleted. The link now shows "not found".`);
+}
+
+/** A contact sheet of a preview's product photos, to eyeball before sending:
+    prospects/sheets/<handle>.png. With no handle, one sheet of every live
+    preview's lead photo. */
+async function sheet() {
+  const sharp = (await import("sharp")).default;
+  const db = load();
+  const h = a._[1]?.replace(/^@/, "").toLowerCase();
+  const sb = supabase();
+  const S = 200, cols = 6;
+  const label = (t) => Buffer.from(`<svg width="${S}" height="26"><rect width="${S}" height="26" fill="#ffeb3b"/><text x="5" y="18" font-size="14" font-family="sans-serif" font-weight="bold">${String(t).replace(/[<&>]/g, "").slice(0, 26)}</text></svg>`);
+  let cells;
+  if (h) {
+    const rec = db[h];
+    if (!rec?.slug) die(`No preview built for @${h}.`);
+    const { data } = await sb.from("demos").select("spec").eq("slug", rec.slug).single();
+    cells = data.spec.products.map((p) => ({ src: p.images[0].src, t: `${p.n}${p.images.some((i) => i.model) ? " (model)" : ""}` }));
+  } else {
+    const live = Object.values(db).filter((r) => r.slug && r.status !== "removed");
+    cells = [];
+    for (const r of live) {
+      const { data } = await sb.from("demos").select("spec").eq("slug", r.slug).single();
+      if (data) cells.push({ src: data.spec.products[0].images[0].src, t: r.username });
+    }
+  }
+  const tiles = [];
+  await pool(cells.map((c, i) => ({ c, i })), 6, async ({ c, i }) => {
+    try {
+      const img = await sharp(await download(c.src)).resize(S, S, { fit: "cover" }).composite([{ input: label(c.t), top: 0, left: 0 }]).toBuffer();
+      tiles.push({ input: img, left: (i % cols) * S, top: Math.floor(i / cols) * S });
+    } catch { /* skip */ }
+  });
+  const out = path.join(DIR, "sheets", `${h ?? "all-previews"}.png`);
+  fs.mkdirSync(path.dirname(out), { recursive: true });
+  await sharp({ create: { width: cols * S, height: Math.ceil(cells.length / cols) * S, channels: 3, background: "#fff" } }).composite(tiles).png().toFile(out);
+  say.ok(path.relative(ROOT, out));
 }
 
 /** Re-apply the current fit rules to every stored account. Lists built
@@ -473,7 +514,7 @@ async function selfTest() {
   say.ok("All extraction checks passed.");
 }
 
-const run = { discover, add, list: () => list(), build, export: exportCsv, status: setStatus, remove, recheck, test: selfTest }[cmd];
+const run = { discover, add, list: () => list(), build, export: exportCsv, status: setStatus, remove, recheck, sheet, test: selfTest }[cmd];
 if (!run) {
   console.log(fs.readFileSync(new URL(import.meta.url), "utf8").split("\n").slice(1, 17).join("\n").replace(/^\/\*|\*\/$/gm, ""));
   process.exit(cmd ? 1 : 0);

@@ -4,6 +4,27 @@
    people talking to camera, sale posters with big text, shop interiors.
    Only used by the local prospect scripts, never by the website. */
 import { pipeline, RawImage } from "@huggingface/transformers";
+import sharp from "sharp";
+
+/* Text on a photo (sale banners, "Order now 98xxx", captioned reel covers):
+   CLIP sees *what* is in a picture but not printed text, so we also read it
+   with Tesseract OCR (also local and free). Only confident, real words count. */
+let ocr;
+export async function readText(buf) {
+  if (!ocr) {
+    const { createWorker } = await import("tesseract.js");
+    ocr = await createWorker("eng");
+    await ocr.setParameters({ user_defined_dpi: "300" });
+  }
+  const png = await sharp(buf).resize(800, 800, { fit: "inside" }).png().toBuffer();
+  const { width, height } = await sharp(png).metadata();
+  const { data } = await ocr.recognize(png, {}, { blocks: true });
+  const words = (data.blocks ?? []).flatMap((b) => b.paragraphs.flatMap((p) => p.lines.flatMap((l) => l.words)))
+    .filter((w) => w.confidence >= 75 && /[A-Za-z0-9₹]{3,}/.test(w.text));
+  const area = words.reduce((s, w) => s + (w.bbox.x1 - w.bbox.x0) * (w.bbox.y1 - w.bbox.y0), 0) / (width * height);
+  return { words: words.length, area };
+}
+export async function closeOcr() { if (ocr) { await ocr.terminate(); ocr = undefined; } }
 
 const GOOD = {
   apparel: [
@@ -32,6 +53,7 @@ const BAD = [
   "a video thumbnail with big text written on top",
   "a screenshot of text",
   "the inside of a crowded shop with shelves",
+  "cardboard boxes or parcels packed for shipping",
   "a group of people at an event",
   "food on a plate",
 ];
@@ -63,8 +85,16 @@ export async function screen(buf, genre) {
   // sitting in the shop are junk even when some product is visible in frame.
   const textish = sum(TEXTISH);
   const person = sum(PERSON);
-  const keep = goodScore >= 0.5 && textish < 0.15 && person < 0.2;
+  let keep = goodScore >= 0.5 && textish < 0.15 && person < 0.2;
+  // Read printed text only on photos that passed: a poster (many words, or
+  // text over a big share of the frame) is junk; any text makes a poor lead.
+  let words = 0;
+  if (keep) {
+    const t = await readText(buf);
+    words = t.words;
+    if (t.words >= 6 || t.area >= 0.025) keep = false;
+  }
   // "On model" only when clearly worn — a hand holding earrings is a product shot.
   const kind = !keep ? "junk" : best.kind === "model" && best.s >= 0.6 ? "model" : "product";
-  return { keep, kind, score: Number(goodScore.toFixed(3)), textish: Number(textish.toFixed(2)), person: Number(person.toFixed(2)), top };
+  return { keep, kind, score: Number(goodScore.toFixed(3)), textish: Number(textish.toFixed(2)), person: Number(person.toFixed(2)), words, top };
 }
