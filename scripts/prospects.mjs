@@ -229,8 +229,10 @@ async function buildOne(sb, rec) {
     // Not enough real product photos to make a preview worth sending.
     rec.qualified = false;
     rec.reason = `too few clean product photos (${usable.length} of ${products.length} posts)`;
-    if (rec.slug && rec.status !== "removed") { a._ = ["remove", rec.username]; await remove(); rec.status = "removed"; }
-    else rec.status = "skipped";
+    if (rec.slug) {
+      if (rec.status !== "removed") { a._ = ["remove", rec.username]; await remove(); }
+      rec.status = "removed"; // a built preview that's gone is "removed", never "skipped"
+    } else rec.status = "skipped";
     say.warn(`@${rec.username}: only ${usable.length} clean product photos — no preview.`);
     return;
   }
@@ -327,9 +329,13 @@ async function build() {
 }
 
 const WHAT = { apparel: "collection", jewellery: "jewellery designs", handicrafts: "handmade pieces" };
-function exportCsv() {
+async function exportCsv() {
   const db = load();
-  const rows = Object.values(db).filter((r) => r.slug && r.status !== "removed");
+  // Only previews that are actually live in the database (never send a dead link).
+  const { data: liveRows, error } = await supabase().from("demos").select("slug").not("status", "eq", "removed");
+  if (error) die(error.message);
+  const liveSlugs = new Set(liveRows.map((x) => x.slug));
+  const rows = Object.values(db).filter((r) => r.slug && liveSlugs.has(r.slug) && !["removed", "skipped"].includes(r.status));
   if (!rows.length) die("No preview sites built yet. Run build first.");
   const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const lines = [["status", "handle", "instagram", "brand", "genre", "followers", "preview_link", "suggested_message"].join(",")];
@@ -340,9 +346,17 @@ function exportCsv() {
       `If you like it, I'd be happy to set it up properly for you. — ${SIGNATURE}`;
     lines.push([r.status, `@${r.username}`, `https://www.instagram.com/${r.username}/`, r.brand, r.genre, r.followers, linkOf(r.slug), msg].map(esc).join(","));
   }
-  const out = path.join(DIR, "outreach.csv");
+  let out = path.join(DIR, "outreach.csv");
   fs.mkdirSync(DIR, { recursive: true });
-  fs.writeFileSync(out, "﻿" + lines.join("\n")); // BOM so Excel reads ₹ and names correctly
+  const body = "﻿" + lines.join("\n"); // BOM so Excel reads ₹ and names correctly
+  try { fs.writeFileSync(out, body); }
+  catch (e) {
+    if (e.code !== "EBUSY" && e.code !== "EPERM") throw e;
+    // The file is open in Excel (Windows locks it): write a dated copy instead.
+    out = path.join(DIR, `outreach-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-")}.csv`);
+    fs.writeFileSync(out, body);
+    say.warn("outreach.csv is open in another program, so a new copy was written instead.");
+  }
   say.ok(`${rows.length} previews → ${path.relative(ROOT, out)} (open it in Excel or Google Sheets)`);
 }
 
@@ -397,7 +411,8 @@ async function sheet() {
     cells = [];
     for (const r of live) {
       const { data } = await sb.from("demos").select("spec").eq("slug", r.slug).single();
-      if (data) cells.push({ src: data.spec.products[0].images[0].src, t: r.username });
+      const src = data?.spec?.products?.[0]?.images?.[0]?.src;
+      if (src) cells.push({ src, t: r.username });
     }
   }
   const tiles = [];
