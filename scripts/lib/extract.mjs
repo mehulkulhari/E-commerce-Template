@@ -279,12 +279,19 @@ export function productsFrom(posts = [], genre, max = 12, brand) {
 }
 
 const PLACE_SUFFIX = /\s+(jodhpur|jaipur|new delhi|delhi|udaipur|ajmer|bikaner|kota|ahmedabad|surat|vadodara|rajkot|chandigarh|ludhiana|amritsar|jalandhar|gurgaon|gurugram|noida|faridabad|rajasthan|india|official)\s*$/i;
+const GENERIC_TAIL = /^(designer|designers|indian|ethnic|traditional|western|ladies|womens?|women's|kids|rajputi|wear|clothing|fashion|fashions|collections?|outfits?|dresses|apparels?|luxury|premium|exclusive)$/i;
 const tidyBrand = (s) => {
   let name = s.replace(/[_]+/g, " ").replace(/\s+/g, " ").trim();
   for (let i = 0; i < 3; i++) {
     const t = name.replace(PLACE_SUFFIX, "").trim();
     if (t.length >= 3) name = t;
   }
+  // "Rooh by Palak Designer Indian Wear" -> "Rooh by Palak": drop a trailing
+  // run of descriptive words, as long as a real name is left behind.
+  const words = name.split(" ");
+  let keep = words.length;
+  while (keep > 2 && GENERIC_TAIL.test(words[keep - 1])) keep--;
+  if (keep < words.length && words.slice(0, keep).some((w) => !GENERIC_TAIL.test(w))) name = words.slice(0, keep).join(" ");
   if (name.length > 34) name = name.slice(0, 34).replace(/\s+\S*$/, "");
   for (let i = 0; i < 3; i++) name = name.replace(TRAILING_FILLER, "").replace(/[\s,.;:&|-]+$/, "").trim();
   // SHOUTING words become Title Case; short acronyms (AD, SS) stay.

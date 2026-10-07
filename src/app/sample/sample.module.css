@@ -747,3 +747,12 @@
   font-size: .68rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
   pointer-events: none;
 }
+
+/* Long shop names (prospect previews): a smaller wordmark that may wrap to
+   two lines, and the nav lives in the menu so it can never run underneath. */
+.navCompact .navLinks { display: none !important; }
+.navCompact .burger { display: grid !important; }
+.brandLong {
+  font-size: clamp(.95rem, 2.4vw, 1.3rem); line-height: 1.15; text-align: center;
+  max-width: min(64vw, 560px); white-space: normal; text-wrap: balance; overflow-wrap: anywhere;
+}

@@ -177,6 +177,19 @@ function list({ onlyNew = false } = {}) {
   }
 }
 
+/** Screen one photo with the local vision model, one at a time (the model
+    is loaded lazily, so commands that never build don't pay for it). */
+let screenQueue = Promise.resolve();
+let vision;
+function screenOne(buf, genre) {
+  const run = screenQueue.then(async () => {
+    vision ??= await import("./lib/vision.mjs");
+    return vision.screen(buf, genre);
+  });
+  screenQueue = run.catch(() => {});
+  return run;
+}
+
 /** Run `fn` over `items` with at most `n` in flight. */
 async function pool(items, n, fn) {
   let i = 0;
@@ -192,40 +205,74 @@ async function buildOne(sb, rec) {
   if (!genre) { say.warn(`@${rec.username}: genre unknown — rerun with --genre apparel|jewellery|handicrafts`); return; }
   const slug = rec.slug ?? slugFor(rec.username);
   rec.brand = brandFrom(rec.profile);
-  if (rec.slug) { // rebuild: clear the previous photos first
-    const { data: old } = await sb.storage.from(BUCKET).list(slug, { limit: 200 });
-    if (old?.length) await sb.storage.from(BUCKET).remove(old.map((f) => `${slug}/${f.name}`));
-  }
   const products = productsFrom(rec.profile.latestPosts, genre, Number(a.products ?? 12), rec.brand);
   if (products.length < 3) { say.warn(`@${rec.username}: only ${products.length} usable posts, skipped.`); return; }
 
-  say.dim(`  @${rec.username}: ${products.length} products, uploading photos…`);
+  // 1. Download every photo (6 at a time) and screen it: keep product shots
+  //    and worn shots; drop talking heads, sale posters, shop interiors.
+  const jobs = products.flatMap((p) => p.imageUrls.map((url, k) => ({ p, k, url })));
+  const got = new Map();
+  await pool(jobs, 6, async ({ p, k, url }) => {
+    try {
+      const buf = await download(url);
+      const verdict = a["no-screen"] ? { keep: true, kind: "product", score: 1 } : await screenOne(buf, genre);
+      got.set(`${p.n}:${k}`, { buf, verdict });
+    } catch (e) { say.dim(`    photo ${p.n}.${k + 1} skipped (${e.message})`); }
+  });
+  const usable = products
+    .map((p) => ({ p, shots: p.imageUrls.map((_, k) => ({ k, ...got.get(`${p.n}:${k}`) })).filter((s) => s.buf && s.verdict.keep) }))
+    .filter((x) => x.shots.length);
+  const junk = jobs.length - usable.reduce((s, x) => s + x.shots.length, 0);
+  const minProducts = Number(a["min-products"] ?? 6);
+  if (usable.length < minProducts) {
+    // Not enough real product photos to make a preview worth sending.
+    rec.qualified = false;
+    rec.reason = `too few clean product photos (${usable.length} of ${products.length} posts)`;
+    if (rec.slug && rec.status !== "removed") { a._ = ["remove", rec.username]; await remove(); rec.status = "removed"; }
+    else rec.status = "skipped";
+    say.warn(`@${rec.username}: only ${usable.length} clean product photos — no preview.`);
+    return;
+  }
+  // The strongest product photo leads (it becomes the hero); the rest keep Instagram order.
+  const bestAt = usable.reduce((bi, x, i, arr) => (x.shots[0].verdict.score > arr[bi].shots[0].verdict.score ? i : bi), 0);
+  usable.unshift(...usable.splice(bestAt, 1));
+
+  say.dim(`  @${rec.username}: ${usable.length} products (${junk} junk photo${junk === 1 ? "" : "s"} dropped), uploading…`);
+  const { data: before } = rec.slug ? await sb.storage.from(BUCKET).list(slug, { limit: 300 }) : { data: [] };
+  const uploaded = new Set();
   let logo;
   if (rec.profile.profilePicUrlHD) {
     try {
       const img = await optimise(await download(rec.profile.profilePicUrlHD), 320);
-      logo = await uploadImage(sb, BUCKET, `${slug}/logo-${hash(img.data)}.webp`, img);
+      const name = `logo-${hash(img.data)}.webp`;
+      logo = await uploadImage(sb, BUCKET, `${slug}/${name}`, img);
+      uploaded.add(name);
     } catch (e) { say.dim(`    logo skipped (${e.message})`); }
   }
-  // Download, convert and upload every photo, 6 at a time.
-  const jobs = products.flatMap((p) => p.imageUrls.map((url, k) => ({ p, k, url })));
+  // 2. Convert and upload the photos that passed, 6 at a time.
   const done = new Map();
-  await pool(jobs, 6, async ({ p, k, url }) => {
+  await pool(usable.flatMap(({ p, shots }) => shots.map((s) => ({ p, s }))), 6, async ({ p, s }) => {
     try {
-      const img = await optimise(await download(url), 1200);
-      done.set(`${p.n}:${k}`, await uploadImage(sb, BUCKET, `${slug}/p${p.n}-${k + 1}-${hash(img.data)}.webp`, img));
-    } catch (e) { say.dim(`    photo ${p.n}.${k + 1} skipped (${e.message})`); }
+      const img = await optimise(s.buf, 1200);
+      const name = `p${p.n}-${s.k + 1}-${hash(img.data)}.webp`;
+      done.set(`${p.n}:${s.k}`, await uploadImage(sb, BUCKET, `${slug}/${name}`, img, s.verdict.kind === "model" ? { model: true } : {}));
+      uploaded.add(name);
+    } catch (e) { say.dim(`    photo ${p.n}.${s.k + 1} skipped (${e.message})`); }
   });
+  // 3. On a rebuild, delete only the old files that are no longer used (no broken-image gap).
+  const stale = (before ?? []).map((f) => f.name).filter((n) => !uploaded.has(n));
+  if (stale.length) await sb.storage.from(BUCKET).remove(stale.map((n) => `${slug}/${n}`));
+
   const specProducts = [];
-  for (const p of products) {
-    const images = p.imageUrls.map((_, k) => done.get(`${p.n}:${k}`)).filter(Boolean);
+  for (const { p, shots } of usable) {
+    const images = shots.map((s) => done.get(`${p.n}:${s.k}`)).filter(Boolean);
     if (!images.length) continue;
     specProducts.push({
       id: `p${p.n}`, n: specProducts.length + 1, name: p.name, category: p.category,
       ...(p.price ? { price: p.price } : {}), ...(p.mrp ? { mrp: p.mrp } : {}), images,
     });
   }
-  if (specProducts.length < 3) { say.warn(`@${rec.username}: photos couldn't be downloaded (links may have expired — rerun to refetch).`); return; }
+  if (specProducts.length < minProducts) { say.warn(`@${rec.username}: photos couldn't be uploaded (links may have expired — rerun to refetch).`); return; }
 
   const spec = {
     slug, genre, brand: rec.brand, handle: rec.username,
@@ -383,6 +430,10 @@ async function selfTest() {
     [brandFrom({ fullName: "👑 शिव-शक्ती बुटीक 👑", username: "_shiv_shakti_boutique_jodhpur", biography: "❤️ Jewellery for Rent & Sale" }), "Shiv Shakti Boutique"],
     [brandFrom({ fullName: "The Decor Souk™" }), "The Decor Souk"],
     [brandFrom({ fullName: "Spring Fabrics", biography: "DESIGNER KURTIS & FABRICS" }), "Spring Fabrics"],
+    [brandFrom({ fullName: "Rooh by Palak Designer Indian Wear" }), "Rooh by Palak"],
+    [brandFrom({ fullName: "Vama Boutique Rajputi Dresses" }), "Vama Boutique"],
+    [brandFrom({ fullName: "Kaur's Designer Boutique" }), "Kaur's Designer Boutique"],
+    [brandFrom({ fullName: "Ethnic Wear" }), "Ethnic Wear"],
     [sp({ biography: "Worldwide Delivery", latestPosts: [{ caption: "如果每日都有一份禮物等住拆 拉開一格再一格 每次都打開都係一份驚喜 呢種期待感就係 Advent Calendar 最令人上癮嘅地方 DM 查詢" }] }, "jewellery").includes("not an Indian shop (captions mostly in another script)"), true],
     [brandFrom({ fullName: "Kusum Jaipur Handmade Rakhi, Festive Decor & Gifts", biography: "Handmade Rakhis | Festive Decor" }), "Kusum Jaipur Handmade Rakhi"],
     [aboutFrom("KAUR'S DESIGNER BOUTIQUE (Since 2010)\nS.C.O 10-11, star bucks lane HLP sector 62, phase 8, Mohali"), "KAUR'S DESIGNER BOUTIQUE (Since 2010)"],

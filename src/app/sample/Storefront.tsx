@@ -212,6 +212,9 @@ export default function Storefront({ catalog, settings, copy = IMPACT_COPY, prev
   const instagram = preview ? instagramUrl(preview.handle) : settings.instagram;
   const igLabel = preview?.handle ? `@${preview.handle}` : `@${settings.instagram.replace(/\/+$/, "").split("/").pop() || "instagram"}`;
   const via = preview ? "Instagram" : "WhatsApp";
+  // Long shop names get a smaller, wrapping wordmark and the nav moves into
+  // the menu, so the name can never run over the links.
+  const longBrand = brand.length > 16;
   const wa = useCallback(
     (msg: string) => (preview ? instagramUrl(preview.handle) : `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(msg)}`),
     [whatsappPhone, preview],
@@ -402,7 +405,7 @@ export default function Storefront({ catalog, settings, copy = IMPACT_COPY, prev
       {/* ── Header ── */}
       <header className={`${styles.header} ${scrolled ? styles.headerScrolled : ""}`}>
         <div className={styles.wrap}>
-          <div className={styles.nav}>
+          <div className={`${styles.nav} ${longBrand ? styles.navCompact : ""}`}>
             <button className={`${styles.iconBtn} ${styles.burger}`} onClick={() => setMenuOpen(true)} aria-label="Open menu">
               <IconMenu />
             </button>
@@ -417,7 +420,7 @@ export default function Storefront({ catalog, settings, copy = IMPACT_COPY, prev
               <a className={styles.navLink} href="#story">Our Story</a>
             </nav>
             <a className={styles.brand} href="#top" aria-label={`${brand}, home`}>
-              <span className={styles.brandMark}>{brand}</span>
+              <span className={`${styles.brandMark} ${longBrand ? styles.brandLong : ""}`}>{brand}</span>
               <span className={styles.brandSub}>{copy.brandSub}</span>
             </a>
             <div className={styles.navUtils}>
