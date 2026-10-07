@@ -756,3 +756,10 @@
   font-size: clamp(.95rem, 2.4vw, 1.3rem); line-height: 1.15; text-align: center;
   max-width: min(64vw, 560px); white-space: normal; text-wrap: balance; overflow-wrap: anywhere;
 }
+
+/* Nav links never run under the wordmark: they may wrap, but only the first
+   line (with room for the underline) is visible, so a link that doesn't fit
+   is hidden whole instead of overlapping. Everything stays in the menu. */
+@media (min-width: 1320px) {
+  .navLinks { flex-wrap: wrap; row-gap: 40px; height: calc(1.6em + 10px); padding-top: 2px; overflow: hidden; min-width: 0; }
+}
